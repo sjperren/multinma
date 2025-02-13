@@ -49,12 +49,14 @@ if (ni_agd_contrast) {
   agd_contrast_y ~ multi_normal(eta_agd_contrast_bar, agd_contrast_Sigma);
 }
 
+int d_index = 0;
 // Class effects model for the d's
 if (class_effects) {
   for (t in 1:(nt-1)) {
     if (which_CE[t] == 0) {
-      // Priors for treatments without a class effect or in a single-occupancy class
-      prior_select2_lp(d[t], prior_trt_dist, prior_trt_location, prior_trt_scale, prior_trt_df);
+      d_index += 1;
+      // Use d_index to refer to the next element in d
+      prior_select2_lp(d[d_index], prior_trt_dist, prior_trt_location, prior_trt_scale, prior_trt_df);
     } else {
       allbeta[(totns + t)] ~ std_normal();
     }

@@ -1686,7 +1686,7 @@ if (class_effects == "exchangeable") {
 
   # Make sure columns of X_all are in correct order (study, trt, omega (if nodesplit), regression terms)
   X_all <- cbind(X_all[, col_study, drop = FALSE],
-                 X_all[, col_trt, drop = FALSE],
+                 if (class_effects == "exchangeable") X_all[, col_trt, drop = FALSE][, which_CE > 0, drop = FALSE] else X_all[, col_trt, drop = FALSE],
                  X_all[, col_omega, drop = FALSE],
                  X_all[, col_reg, drop = FALSE])
 

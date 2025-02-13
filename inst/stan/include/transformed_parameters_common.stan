@@ -18,11 +18,11 @@ vector[nX] allbeta = QR ? R_inv * beta_tilde : beta_tilde;
 // Study baselines
 vector[totns] mu;
 // Treatment effects
-vector[nt - 1] d = allbeta[(totns +1):(totns + nt - 1)];
+vector[nt - 1 - num_elements(which_gt0a(which_CE))] d = allbeta[(totns + 1):(totns + nt - 1 - num_elements(which_gt0a(which_CE)))];
 // Node-splitting omega ()
 vector[nodesplit] omega; // nodesplit ? allbeta[totns + ns] : vector(0);
 // Regression predictors
-vector[nX - totns - (nt - 1) - nodesplit] beta;
+vector[nX - totns - ((nt - num_elements(which_gt0a(which_CE))) - 1) - nodesplit] beta;
 
 // -- AgD integration --
 // vector[nint_max > 1 ? nint * ni_agd_arm : 0] theta_agd_arm_ii;
@@ -38,14 +38,14 @@ if (totns) {
 
 // -- Regression predictors --
 // Pull out beta from allbeta
-if (nX - totns - (nt - 1) - nodesplit) {
-  beta = allbeta[(totns + nt + nodesplit):];
+if (nX - totns - ((nt - num_elements(which_gt0a(which_CE))) - 1) - nodesplit) {
+    beta = allbeta[(totns + nt - num_elements(which_gt0a(which_CE)) + nodesplit):];
 }
 
 // -- Node-splitting --
 // Pull out omega from allbeta
 if (nodesplit) {
-  omega[1] = allbeta[totns + nt];
+    omega[1] = allbeta[totns + nt - num_elements(which_gt0a(which_CE))];
 }
 
 // -- IPD model --
