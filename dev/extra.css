@@ -1,0 +1,44 @@
+
+body {
+  font-size: var(--bs-body-font-size);
+}
+
+@media (min-width: 1200px) {
+  body {
+    font-size: 1rem;
+  }
+}
+
+/*
+.row>main {
+  max-width: 55rem
+}
+
+@media (min-width: 768px) {
+  .col-md-3 {
+      flex: 0 0 auto;
+      -webkit-flex: 0 0 auto;
+      width: 25%;
+  }
+}
+*/
+
+pre code {
+  white-space: pre;
+}
+
+pre code a:any-link {
+  text-decoration: none;
+}
+
+h2, .h2 {
+  margin-top: 2rem;
+}
+
+h3, .h3 {
+  margin-top: 2rem;
+}
+
+h4, .h4 {
+  margin-top: 1.5rem;
+}
