@@ -1,10 +1,14 @@
 #' Aggregate level matching
 #'
-#' The `alm()` function runs aggregate level matching across studies on different
-#' sub-networks within a disconnected network.
+#' Runs aggregate level matching across studies on different subnetworks.
 #'
-#' @covariates
+#' @param network An `nma_data` object.
+#' @param covariates Character vector of covariate names.
+#' @param scale Logical; whether to scale differences using pooled SDs.
+#' @param binary_covariates Optional character vector of binary covariate names.
 #'
+#' @return A list with a `summary` dataframe and `distance_matrix`.
+#' @export
 
 alm <- function(network,
                 covariates = NULL,
@@ -241,6 +245,15 @@ alm <- function(network,
     distance_matrix = dist_matrix
   ))
 }
+
+#' Plot distance matrix from `alm()`
+#'
+#' Produces a coloured `gt` table of distances from `alm()`.
+#'
+#' @param alm_output Output from `alm()`.
+#'
+#' @return A `gt` table.
+#' @export
 
 # Create a coloured table from the output of alm()
 plot_alm_matrix <- function(alm_output) {
