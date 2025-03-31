@@ -93,7 +93,7 @@ alm <- function(network,
       }
 
       # If scaled, handle SDs
-      if (scaled && add_covariate) {
+      if (scale && add_covariate) {
         if (sd_col %in% colnames(agd_df)) {
           df[[paste0(cov, "_sd")]] <- agd_df[[sd_col]]
         } else if (!is.null(binary_covariates) && cov %in% binary_covariates) {
@@ -133,7 +133,7 @@ alm <- function(network,
       !!!setNames(
         unlist(
           lapply(covariates, function(cov) {
-            if (scaled) {
+            if (scale) {
               list(
                 rlang::expr(
                   weighted.mean(!!rlang::sym(paste0(cov, "_mean")), w = .data$.sample_size, na.rm = TRUE)
@@ -155,7 +155,7 @@ alm <- function(network,
         # Clean column names
         unlist(
           lapply(covariates, function(cov) {
-            if (scaled) {
+            if (scale) {
               c(paste0(cov, "_mean"), paste0(cov, "_sd"))
             } else {
               paste0(cov, "_mean")
@@ -214,7 +214,7 @@ alm <- function(network,
                         ncol = nrow(sub2),
                         dimnames = list(sub1$.study, sub2$.study))
 
-  # Calculate distances (scaled or unscaled)
+  # Calculate distances (scale or unscale)
   for (i in seq_len(nrow(sub1))) {
     for (j in seq_len(nrow(sub2))) {
 
