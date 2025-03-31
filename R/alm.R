@@ -285,20 +285,20 @@ plot_alm_matrix <- function(alm_output) {
     # Style row labels (stub) using IPD/AGD color
     gt::tab_style(
       style = list(cell_fill(color = "navy"), cell_text(color = "white", weight = "bold")),
-      locations = gt::cells_stub(rows = df$.study %in% row_colors$.study[row_colors$source == "IPD"])
+      locations = gt::cells_stub(rows = df$.study %in% row_colors$.study[row_colors$source == "AGD"])
     ) |>
     gt::tab_style(
       style = list(cell_fill(color = "darkgreen"), cell_text(color = "white", weight = "bold")),
-      locations = gt::cells_stub(rows = df$.study %in% row_colors$.study[row_colors$source == "AGD"])
+      locations = gt::cells_stub(rows = df$.study %in% row_colors$.study[row_colors$source == "IPD"])
     ) |>
     # Style column headers using IPD/AGD color
     gt::tab_style(
       style = list(cell_fill(color = "navy"), cell_text(color = "white", weight = "bold")),
-      locations = gt::cells_column_labels(columns = col_colors$.study[col_colors$source == "IPD"])
+      locations = gt::cells_column_labels(columns = col_colors$.study[col_colors$source == "AGD"])
     ) |>
     gt::tab_style(
       style = list(cell_fill(color = "darkgreen"), cell_text(color = "white", weight = "bold")),
-      locations = gt::cells_column_labels(columns = col_colors$.study[col_colors$source == "AGD"])
+      locations = gt::cells_column_labels(columns = col_colors$.study[col_colors$source == "IPD"])
     )
   return(gt_tbl)
 }
