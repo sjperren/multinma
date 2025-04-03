@@ -12,3 +12,6 @@ vector<lower=0>[class_effects ? max(which_CE_sd) : 0] class_sd; // Class standar
 
 // randomised part of our non-centred parameterisation
 vector[class_effects ? n_class_trts : 0] z_class;
+
+// random baseline effect
+vector[n_baseline] baseline_effect;
