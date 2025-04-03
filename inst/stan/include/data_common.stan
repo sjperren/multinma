@@ -91,3 +91,10 @@ int<lower=0,upper=6> prior_class_sd_dist; // Prior specifications for class stan
 real prior_class_sd_location;
 real<lower=0> prior_class_sd_scale;
 real<lower=0> prior_class_sd_df;
+
+// Flag to indicate whether a random baseline is used (1 = random, 0 = fixed)
+int<lower=0> random_baseline;
+
+// Hyperpriors for the random baseline effect
+real prior_baseline_mean;
+real<lower=0> prior_baseline_sd;
