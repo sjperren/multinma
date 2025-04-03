@@ -303,3 +303,87 @@ plot_alm_matrix <- function(alm_output) {
   return(gt_tbl)
 }
 
+baseline_synthesis <- function(network,
+                               consistency = c("consistency", "ume", "nodesplit"),
+                               trt_effects = c("fixed", "random"),
+                               regression = NULL,
+                               class_interactions = c("common", "exchangeable", "independent"),
+                               class_effects = c("independent", "common", "exchangeable"),
+                               class_sd = c("independent", "common"),
+                               likelihood = NULL, link = NULL, ...,
+                               nodesplit = get_nodesplits(network, include_consistency = TRUE),
+                               prior_intercept = .default(normal(scale = 100)),
+                               prior_trt = .default(normal(scale = 10)),
+                               prior_het = .default(half_normal(scale = 5)),
+                               prior_het_type = c("sd", "var", "prec"),
+                               prior_reg = .default(normal(scale = 10)),
+                               prior_aux = .default(),
+                               prior_aux_reg = .default(),
+                               prior_class_mean = .default(normal(scale = 10)),
+                               prior_class_sd = .default(half_normal(scale = 5)),
+                               prior_baseline = .default(normal(scale = 10)),
+                               prior_baseline_sd = .default(half_normal(scale = 5)),
+                               aux_by = NULL,
+                               aux_regression = NULL,
+                               QR = FALSE,
+                               center = TRUE,
+                               adapt_delta = NULL,
+                               int_thin = 0,
+                               int_check = TRUE,
+                               mspline_degree = 3,
+                               n_knots = 7,
+                               knots = NULL,
+                               mspline_basis = NULL) {
+
+  # Prior checks
+  check_prior(prior_baseline)
+  check_prior(prior_baseline_sd)
+
+  if (.is_default(prior_baseline)) {
+    warn(glue::glue("Warning: 'prior_baseline' was left at its default value: {get_prior_call(prior_baseline)}")) }
+  if (.is_default(prior_baseline_sd)) {
+    warn(glue::glue("Warning: 'prior_baseline_sd' was left at its default value: {get_prior_call(prior_baseline_sd)}")) }
+
+  baseline_options <- list(random_baseline = TRUE,
+                           prior_baseline = prior_baseline,
+                           prior_baseline_sd = prior_baseline_sd)
+
+  out <- nma(network = network,
+             consistency = consistency,
+             trt_effects = trt_effects,
+             regression = regression,
+             class_interactions = class_interactions,
+             class_effects = class_effects,
+             class_sd = class_sd,
+             likelihood = likelihood,
+             link = link,
+             ...,
+             nodesplit = nodesplit,
+             prior_intercept = prior_intercept,
+             prior_trt = prior_trt,
+             prior_het = prior_het,
+             prior_het_type = prior_het_type,
+             prior_reg = prior_reg,
+             prior_aux = prior_aux,
+             prior_aux_reg = prior_aux_reg,
+             prior_class_mean = prior_class_mean,
+             prior_class_sd = prior_class_sd,
+             aux_by = aux_by,
+             aux_regression = aux_regression,
+             QR = QR,
+             center = center,
+             adapt_delta = adapt_delta,
+             int_thin = int_thin,
+             int_check = int_check,
+             mspline_degree = mspline_degree,
+             n_knots = n_knots,
+             knots = knots,
+             mspline_basis = mspline_basis,
+             .baseline_options = baseline_options)
+
+class(out) <- c("baseline_synthesis", class(out))
+
+}
+
+
+
