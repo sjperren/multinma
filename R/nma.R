@@ -1788,6 +1788,15 @@ if (class_effects == "exchangeable") {
                             sd = 1, var = 2, prec = 3)
     )
 
+  # Check if running baseline synthesis
+  if (!is.null(.baseline_options) && isTRUE(.baseline_options$random_baseline)) {
+    standat$random_baseline <- 1
+    standat$prior_baseline_mean <- get_prior_call(.baseline_options$prior_baseline)
+    standat$prior_baseline_sd <- get_prior_call(.baseline_options$prior_baseline_sd)
+  } else {
+    standat$random_baseline <- 0
+  }
+
   # Standard pars to monitor
   pars <- c("mu", "beta", "d",
             "log_lik", "resdev",
