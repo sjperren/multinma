@@ -93,7 +93,7 @@ real<lower=0> prior_class_sd_scale;
 real<lower=0> prior_class_sd_df;
 
 // Flag to indicate whether a random baseline is used (1 = random, 0 = fixed)
-int<lower=0> random_baseline;
+int<lower=0, upper=1> random_baseline;
 
 // Hyperpriors for the random baseline effect
 real prior_baseline_mean;
