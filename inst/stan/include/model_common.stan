@@ -2,7 +2,14 @@
 
 // -- Priors --
 // Study-specific baselines
-prior_select_lp(mu, prior_intercept_dist, prior_intercept_location, prior_intercept_scale, prior_intercept_df);
+if (random_baseline == 1) {
+  // Hierarchical prior
+  mu ~ normal(prior_baseline_mean, prior_baseline_sd);
+} else {
+  // “Fixed baseline” approach, or separate identical priors
+  prior_select_lp(mu, prior_intercept_dist, prior_intercept_location, prior_intercept_scale, prior_intercept_df);
+}
+
 // Treatment effects
   if (class_effects == 0) {
     prior_select_lp(d, prior_trt_dist, prior_trt_location, prior_trt_scale, prior_trt_df);
