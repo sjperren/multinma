@@ -313,6 +313,7 @@ baseline_synthesis <- function(network,
                                likelihood = NULL, link = NULL, ...,
                                nodesplit = get_nodesplits(network, include_consistency = TRUE),
                                prior_intercept = .default(normal(scale = 100)),
+                               prior_intercept_sd = .default(half_normal(scale = 5)),
                                prior_trt = .default(normal(scale = 10)),
                                prior_het = .default(half_normal(scale = 5)),
                                prior_het_type = c("sd", "var", "prec"),
@@ -321,8 +322,6 @@ baseline_synthesis <- function(network,
                                prior_aux_reg = .default(),
                                prior_class_mean = .default(normal(scale = 10)),
                                prior_class_sd = .default(half_normal(scale = 5)),
-                               prior_baseline = .default(normal(scale = 10)),
-                               prior_baseline_sd = .default(half_normal(scale = 5)),
                                aux_by = NULL,
                                aux_regression = NULL,
                                QR = FALSE,
@@ -336,17 +335,13 @@ baseline_synthesis <- function(network,
                                mspline_basis = NULL) {
 
   # Prior checks
-  check_prior(prior_baseline)
-  check_prior(prior_baseline_sd)
+  check_prior(prior_intercept_sd)
 
-  if (.is_default(prior_baseline)) {
-    warn(glue::glue("Warning: 'prior_baseline' was left at its default value: {get_prior_call(prior_baseline)}")) }
-  if (.is_default(prior_baseline_sd)) {
-    warn(glue::glue("Warning: 'prior_baseline_sd' was left at its default value: {get_prior_call(prior_baseline_sd)}")) }
+  if (.is_default(prior_intercept_sd)) {
+    warn(glue::glue("Warning: 'prior_intercept_sd' was left at its default value: {get_prior_call(prior_intercept_sd)}")) }
 
-  baseline_options <- list(random_baseline = TRUE,
-                           prior_baseline = prior_baseline,
-                           prior_baseline_sd = prior_baseline_sd)
+  baseline_effects <- list(random_baseline = TRUE,
+                           prior_intercept_sd = prior_intercept_sd)
 
   out <- nma(network = network,
              consistency = consistency,

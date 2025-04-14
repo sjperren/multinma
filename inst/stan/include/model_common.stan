@@ -4,7 +4,7 @@
 // Study-specific baselines
 if (random_baseline == 1) {
   // Hierarchical prior
-  mu ~ normal(prior_baseline_mean, prior_baseline_sd);
+  mu ~ normal(baseline_mean, baseline_sd);
 } else {
   // “Fixed baseline” approach, or separate identical priors
   prior_select_lp(mu, prior_intercept_dist, prior_intercept_location, prior_intercept_scale, prior_intercept_df);

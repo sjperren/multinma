@@ -14,4 +14,4 @@ vector<lower=0>[class_effects ? max(which_CE_sd) : 0] class_sd; // Class standar
 vector[class_effects ? n_class_trts : 0] z_class;
 
 // random baseline effect
-vector[totns] baseline_effect;
+vector[random_baseline ? totns : 0 ] baseline_mean; // baseline means (zero-length if not using random baselines)

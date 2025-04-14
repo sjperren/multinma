@@ -303,7 +303,8 @@ nma <- function(network,
                 mspline_degree = 3,
                 n_knots = 7,
                 knots = NULL,
-                mspline_basis = NULL) {
+                mspline_basis = NULL,
+                .baseline_options = NULL) {
 
   # Check network
   if (!inherits(network, "nma_data")) {
@@ -1193,7 +1194,9 @@ if (class_effects == "exchangeable") {
     adapt_delta = adapt_delta,
     int_thin = int_thin,
     int_check = int_check,
-    basis = basis)
+    basis = basis,
+    random_baseline = random_baseline,
+    prior_intercept_sd = prior_intecept_sd)
 
   # Make readable parameter names for generated quantities
   fnames_oi <- stanfit@sim$fnames_oi
@@ -1426,7 +1429,8 @@ nma.fit <- function(ipd_x, ipd_y,
                     adapt_delta = NULL,
                     int_thin = 0,
                     int_check = TRUE,
-                    basis) {
+                    basis,
+                    .baseline_options = NULL) {
 
   if (missing(ipd_x)) ipd_x <- NULL
   if (missing(ipd_y)) ipd_y <- NULL
@@ -1790,11 +1794,10 @@ if (class_effects == "exchangeable") {
 
   # Check if running baseline synthesis
   if (!is.null(.baseline_options) && isTRUE(.baseline_options$random_baseline)) {
-    standat$random_baseline <- 1
-    standat$prior_baseline_mean <- get_prior_call(.baseline_options$prior_baseline)
-    standat$prior_baseline_sd <- get_prior_call(.baseline_options$prior_baseline_sd)
+    random_baseline <- 1
+    prior_intercept_sd <- get_prior_call(.baseline_options$prior_intercept_sd)
   } else {
-    standat$random_baseline <- 0
+    random_baseline <- 0
   }
 
   # Standard pars to monitor
