@@ -304,7 +304,8 @@ nma <- function(network,
                 n_knots = 7,
                 knots = NULL,
                 mspline_basis = NULL,
-                .baseline_options = NULL) {
+                random_baseline = NULL,
+                prior_intercept_sd = NULL) {
 
   # Check network
   if (!inherits(network, "nma_data")) {
@@ -1159,6 +1160,12 @@ if (class_effects == "exchangeable") {
     class_sd_design <- class_mean_design
   }
 }
+
+  # Random baselines
+  if (random_baseline){
+    prior_intercept_sd <- prior_intercept_sd
+  }
+
   # Fit using nma.fit
   stanfit <- nma.fit(ipd_x = X_ipd, ipd_y = y_ipd,
     agd_arm_x = X_agd_arm, agd_arm_y = y_agd_arm,
@@ -1196,7 +1203,7 @@ if (class_effects == "exchangeable") {
     int_check = int_check,
     basis = basis,
     random_baseline = random_baseline,
-    prior_intercept_sd = prior_intecept_sd)
+    prior_intercept_sd = prior_intercept_sd)
 
   # Make readable parameter names for generated quantities
   fnames_oi <- stanfit@sim$fnames_oi
@@ -1430,7 +1437,8 @@ nma.fit <- function(ipd_x, ipd_y,
                     int_thin = 0,
                     int_check = TRUE,
                     basis,
-                    .baseline_options = NULL) {
+                    random_baseline = NULL,
+                    prior_intercept_sd) {
 
   if (missing(ipd_x)) ipd_x <- NULL
   if (missing(ipd_y)) ipd_y <- NULL
@@ -1544,6 +1552,9 @@ if (class_effects == "exchangeable") {
 
   # Check priors
   check_prior(prior_intercept)
+  if (random_baseline){
+    check_prior(prior_intercept_sd)
+  }
   check_prior(prior_trt)
   if (trt_effects == "random") check_prior(prior_het)
   check_prior(prior_reg)
@@ -1765,13 +1776,19 @@ if (class_effects == "exchangeable") {
     # Class effects
     which_CE = if (class_effects == "exchangeable") which_CE else numeric(0),
     which_CE_sd = if (class_effects == "exchangeable") which_CE_sd else numeric(0),
-    class_effects = ifelse(class_effects == "exchangeable", 1, 0)
+    class_effects = ifelse(class_effects == "exchangeable", 1, 0),
+    random_baseline = ifelse(random_baseline == TRUE, 1, 0)
     )
 
   # Add priors
   standat <- purrr::list_modify(standat,
     !!! prior_standat(prior_intercept, "prior_intercept",
                       valid = c("Normal", "Cauchy", "Student t", "flat (implicit)")),
+    !!! prior_standat(prior_intercept_sd, "prior_intercept_sd",
+                      valid = c("Normal", "half-Normal", "log-Normal",
+                                "Cauchy",  "half-Cauchy",
+                                "Student t", "half-Student t", "log-Student t",
+                                "Exponential", "flat (implicit)")),
     !!! prior_standat(prior_trt, "prior_trt",
                       valid = c("Normal", "Cauchy", "Student t", "flat (implicit)")),
     !!! prior_standat(prior_reg, "prior_reg",
@@ -1793,9 +1810,9 @@ if (class_effects == "exchangeable") {
     )
 
   # Check if running baseline synthesis
-  if (!is.null(.baseline_options) && isTRUE(.baseline_options$random_baseline)) {
+  if (!is.null(random_baseline) && random_baseline == 1) {
     random_baseline <- 1
-    prior_intercept_sd <- get_prior_call(.baseline_options$prior_intercept_sd)
+    prior_intercept_sd <- get_prior_call(prior_intercept_sd)
   } else {
     random_baseline <- 0
   }
@@ -1817,6 +1834,11 @@ if (class_effects == "exchangeable") {
   # Monitor omega for node-splitting model
   if (consistency == "nodesplit") {
     pars <- c(pars, "omega")
+  }
+
+  # Monitor baseline SD for random baselines
+  if (random_baseline){
+    pars <- c(pars, "phi")
   }
 
   # Monitor cumulative integration error if using numerical integration

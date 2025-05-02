@@ -35,7 +35,9 @@ nma(
   mspline_degree = 3,
   n_knots = 7,
   knots = NULL,
-  mspline_basis = NULL
+  mspline_basis = NULL,
+  random_baseline = NULL,
+  prior_intercept_sd = NULL
 )
 }
 \arguments{

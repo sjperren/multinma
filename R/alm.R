@@ -303,6 +303,7 @@ plot_alm_matrix <- function(alm_output) {
   return(gt_tbl)
 }
 
+#' @export
 baseline_synthesis <- function(network,
                                consistency = c("consistency", "ume", "nodesplit"),
                                trt_effects = c("fixed", "random"),
@@ -340,8 +341,7 @@ baseline_synthesis <- function(network,
   if (.is_default(prior_intercept_sd)) {
     warn(glue::glue("Warning: 'prior_intercept_sd' was left at its default value: {get_prior_call(prior_intercept_sd)}")) }
 
-  baseline_effects <- list(random_baseline = TRUE,
-                           prior_intercept_sd = prior_intercept_sd)
+  random_baseline = TRUE
 
   out <- nma(network = network,
              consistency = consistency,
@@ -374,7 +374,8 @@ baseline_synthesis <- function(network,
              n_knots = n_knots,
              knots = knots,
              mspline_basis = mspline_basis,
-             .baseline_options = baseline_options)
+             random_baseline = random_baseline,
+             prior_intercept_sd = prior_intercept_sd)
 
 class(out) <- c("baseline_synthesis", class(out))
 
