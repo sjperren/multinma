@@ -12,8 +12,15 @@
 
 alm <- function(network,
                 covariates = NULL,
-                scale = FALSE,
+                method = c("unscaled", "scaled", "T test"),
                 binary_covariates = NULL) {
+
+  # Check method argument
+  method <- match.arg(method)
+
+  # Map to old 'scale' logic for the Euclidean cases
+  scale <- if (method == "scaled") TRUE else FALSE
+
   # Check network
   if (!inherits(network, "nma_data")) {
     abort("Expecting an `nma_data` object, as created by the functions `set_*`, `combine_network`, or `add_integration`.")
@@ -130,6 +137,7 @@ alm <- function(network,
   agd_summary <- agd_all |>
     dplyr::group_by(.study) |>
     dplyr::summarise(
+      total_n = sum(.data$.sample_size, na.rm = TRUE),
       !!!setNames(
         unlist(
           lapply(covariates, function(cov) {
@@ -214,7 +222,13 @@ alm <- function(network,
                         ncol = nrow(sub2),
                         dimnames = list(sub1$.study, sub2$.study))
 
+  dist_matrix_full <- matrix(NA,
+                             nrow = nrow(all_summary),
+                             ncol = nrow(all_summary),
+                             dimnames = list(all_summary$.study, all_summary$.study))
+
   # Calculate distances (scale or unscale)
+  # Sub network 1  VS Sub network 2
   for (i in seq_len(nrow(sub1))) {
     for (j in seq_len(nrow(sub2))) {
 
@@ -240,9 +254,37 @@ alm <- function(network,
     }
   }
 
+  # All studies vs all studies
+  for (i in seq_len(nrow(all_summary))) {
+    for (j in seq_len(nrow(all_summary))) {
+      if (i == j) next   # leave diagonal as NA
+
+      # Extract covariate means
+      vec1 <- as.numeric(all_summary[i, paste0(covariates, "_mean")])
+      vec2 <- as.numeric(all_summary[j, paste0(covariates, "_mean")])
+
+      if (scale) {
+        # Extract SDs and compute pooled SDs
+        sd1 <- as.numeric(all_summary[i, paste0(covariates, "_sd")])
+        sd2 <- as.numeric(all_summary[j, paste0(covariates, "_sd")])
+        pooled_sd <- sqrt((sd1^2 + sd2^2) / 2)
+
+        # Avoid division by zero or NA
+        valid <- !is.na(vec1) & !is.na(vec2) & !is.na(pooled_sd) & pooled_sd > 0
+        diff_scaled <- (vec1[valid] - vec2[valid]) / pooled_sd[valid]
+        dist_matrix_full[i, j] <- sqrt(sum(diff_scaled^2))
+      } else {
+        # Unscaled Euclidean distance
+        valid <- !is.na(vec1) & !is.na(vec2)
+        dist_matrix_full[i, j] <- sqrt(sum((vec1[valid] - vec2[valid])^2))
+      }
+    }
+  }
+
   return(list(
     summary = all_summary,
-    distance_matrix = dist_matrix
+    distance_matrix = dist_matrix,
+    distance_matrix_full = dist_matrix_full
   ))
 }
 
@@ -258,11 +300,15 @@ alm <- function(network,
 # Create a coloured table from the output of alm()
 plot_alm_matrix <- function(alm_output) {
   mat <- alm_output$distance_matrix
+  mat_full <- alm_output$distance_matrix_full
   summary_df <- alm_output$summary
 
   # Convert matrix to dataframe with .study column
   df <- as.data.frame(mat)
   df <- tibble::rownames_to_column(df, var = ".study")
+
+  df_full <- as.data.frame(mat_full)
+  df_full <- tibble::rownames_to_column(df_full, var = ".study")
 
   # Extract correct data sources for rows and columns using the 'source' column
   row_colors <- summary_df |>
@@ -273,7 +319,15 @@ plot_alm_matrix <- function(alm_output) {
     dplyr::filter(.study %in% colnames(mat)) |>
     dplyr::select(.study, source)
 
-  # Create gt table
+  row_colors_full <- summary_df |>
+    dplyr::filter(.study %in% rownames(mat_full)) |>
+    dplyr::select(.study, source)
+
+  col_colors_full <- summary_df |>
+    dplyr::filter(.study %in% colnames(mat_full)) |>
+    dplyr::select(.study, source)
+
+  # Create gt table s1 vs s2
   gt_tbl <- gt::gt(df, rowname_col = ".study") |>
     gt::data_color(
       columns = everything(),
@@ -300,7 +354,38 @@ plot_alm_matrix <- function(alm_output) {
       style = list(cell_fill(color = "darkgreen"), cell_text(color = "white", weight = "bold")),
       locations = gt::cells_column_labels(columns = col_colors$.study[col_colors$source == "IPD"])
     )
-  return(gt_tbl)
+
+  # Create gt table for FULL
+  gt_tbl_full <- gt::gt(df_full, rowname_col = ".study") |>
+    gt::data_color(
+      columns = everything(),
+      fn = scales::col_numeric(
+        palette = c("white", "#FDB0B0", "red"),
+        domain = range(mat_full, na.rm = TRUE)
+      )
+    ) |>
+    # Style row labels (stub) using IPD/AGD color
+    gt::tab_style(
+      style = list(cell_fill(color = "navy"), cell_text(color = "white", weight = "bold")),
+      locations = gt::cells_stub(rows = df_full$.study %in% row_colors_full$.study[row_colors_full$source == "AGD"])
+    ) |>
+    gt::tab_style(
+      style = list(cell_fill(color = "darkgreen"), cell_text(color = "white", weight = "bold")),
+      locations = gt::cells_stub(rows = df_full$.study %in% row_colors_full$.study[row_colors_full$source == "IPD"])
+    ) |>
+    # Style column headers using IPD/AGD color
+    gt::tab_style(
+      style = list(cell_fill(color = "navy"), cell_text(color = "white", weight = "bold")),
+      locations = gt::cells_column_labels(columns = col_colors_full$.study[col_colors_full$source == "AGD"])
+    ) |>
+    gt::tab_style(
+      style = list(cell_fill(color = "darkgreen"), cell_text(color = "white", weight = "bold")),
+      locations = gt::cells_column_labels(columns = col_colors_full$.study[col_colors_full$source == "IPD"])
+    )
+  return(list(
+    subnetwork_table = gt_tbl,
+    full_table = gt_tbl_full)
+  )
 }
 
 #' @export
@@ -311,10 +396,10 @@ baseline_synthesis <- function(network,
                                class_interactions = c("common", "exchangeable", "independent"),
                                class_effects = c("independent", "common", "exchangeable"),
                                class_sd = c("independent", "common"),
-                               likelihood = NULL, link = NULL, ...,
+                               likelihood = NULL, link = NULL,
+                               ...,
                                nodesplit = get_nodesplits(network, include_consistency = TRUE),
                                prior_intercept = .default(normal(scale = 100)),
-                               prior_intercept_sd = .default(half_normal(scale = 5)),
                                prior_trt = .default(normal(scale = 10)),
                                prior_het = .default(half_normal(scale = 5)),
                                prior_het_type = c("sd", "var", "prec"),
@@ -333,15 +418,14 @@ baseline_synthesis <- function(network,
                                mspline_degree = 3,
                                n_knots = 7,
                                knots = NULL,
-                               mspline_basis = NULL) {
-
-  # Prior checks
-  check_prior(prior_intercept_sd)
+                               mspline_basis = NULL,
+                               prior_intercept_sd = .default(half_normal(scale = 5)),
+                               random_baseline = TRUE) {
 
   if (.is_default(prior_intercept_sd)) {
     warn(glue::glue("Warning: 'prior_intercept_sd' was left at its default value: {get_prior_call(prior_intercept_sd)}")) }
 
-  random_baseline = TRUE
+  check_prior(prior_intercept_sd)
 
   out <- nma(network = network,
              consistency = consistency,
@@ -378,8 +462,9 @@ baseline_synthesis <- function(network,
              prior_intercept_sd = prior_intercept_sd)
 
 class(out) <- c("baseline_synthesis", class(out))
-
+return(out)
 }
+
 
 
 
