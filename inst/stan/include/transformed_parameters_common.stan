@@ -13,16 +13,18 @@ vector[n_delta] f_delta =
       tau[1] * RE_L * u_delta
   ) : u_delta;
 
+
+
   // -- Back-transformed parameters --
   vector[nX] allbeta = QR ? R_inv * beta_tilde : beta_tilde;
-  // Study baselines
-  vector[totns] mu;
   // Treatment effects
   vector[nt - 1] d = allbeta[(totns +1):(totns + nt - 1)];
   // Node-splitting omega ()
   vector[nodesplit] omega; // nodesplit ? allbeta[totns + ns] : vector(0);
   // Regression predictors
   vector[nX - totns - (nt - 1) - nodesplit] beta;
+  // Intercept
+  vector[totns] mu;
 
   // -- AgD integration --
   // vector[nint_max > 1 ? nint * ni_agd_arm : 0] theta_agd_arm_ii;

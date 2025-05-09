@@ -61,6 +61,11 @@ real prior_intercept_location;
 real<lower=0> prior_intercept_scale;
 real<lower=0> prior_intercept_df;
 
+int<lower=0,upper=6> prior_intercept_sd_dist;
+real prior_intercept_sd_location;
+real<lower=0> prior_intercept_sd_scale;
+real<lower=0> prior_intercept_sd_df;
+
 int<lower=0,upper=3> prior_trt_dist;
 real prior_trt_location;
 real<lower=0> prior_trt_scale;
@@ -94,3 +99,5 @@ real<lower=0> prior_class_sd_df;
 
 // Flag to indicate whether a random baseline is used (1 = random, 0 = fixed)
 int<lower=0, upper=1> random_baseline;
+
+
