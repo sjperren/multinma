@@ -303,9 +303,18 @@ nma <- function(network,
                 mspline_degree = 3,
                 n_knots = 7,
                 knots = NULL,
-                mspline_basis = NULL,
-                random_baseline = NULL,
-                prior_intercept_sd = NULL) {
+                mspline_basis = NULL) {
+
+  # Remove random baseline arguments from ...
+  dlist <- list(...)
+  if ("random_baseline" %in% names(dlist)) {
+    random_baseline <- dlist$random_baseline
+    prior_intercept_sd <- dlist$prior_intercept_sd
+    dlist  <- NULL
+  } else {
+    random_baseline <- FALSE
+    prior_intercept_sd <- NULL
+  }
 
   # Check network
   if (!inherits(network, "nma_data")) {
@@ -331,8 +340,6 @@ nma <- function(network,
                   "See set_*() argument `trt_class`.", sep = "\n"))
     }
   }
-
-
 
   if (class_effects == "common") {
     # Overwrite treatments with class variables
@@ -455,6 +462,7 @@ nma <- function(network,
                          trt_effects = trt_effects,
                          class_effects = class_effects,
                          class_sd = class_sd,
+                         random_baseline = random_baseline,
                          regression = regression,
                          likelihood = likelihood,
                          link = link,
@@ -470,6 +478,7 @@ nma <- function(network,
                          aux_regression = aux_regression,
                          prior_class_mean = prior_class_mean,
                          prior_class_sd = prior_class_sd,
+                         prior_intercept_sd = prior_intercept_sd,
                          QR = QR,
                          center = center,
                          adapt_delta = adapt_delta,
@@ -1161,11 +1170,6 @@ if (class_effects == "exchangeable") {
   }
 }
 
-  # Random baselines
-  if (random_baseline){
-    prior_intercept_sd <- prior_intercept_sd
-  }
-
   # Fit using nma.fit
   stanfit <- nma.fit(ipd_x = X_ipd, ipd_y = y_ipd,
     agd_arm_x = X_agd_arm, agd_arm_y = y_agd_arm,
@@ -1201,9 +1205,18 @@ if (class_effects == "exchangeable") {
     adapt_delta = adapt_delta,
     int_thin = int_thin,
     int_check = int_check,
-    basis = basis,
-    random_baseline = random_baseline,
-    prior_intercept_sd = prior_intercept_sd)
+    basis = basis)
+
+  # Remove random baseline arguments from ...
+  dlist <- list(...)
+  if ("random_baseline" %in% names(dlist)) {
+    random_baseline <- dlist$random_baseline
+    prior_intercept_sd <- dlist$prior_intercept_sd
+    dlist  <- NULL
+  } else {
+    random_baseline <- FALSE
+    prior_intercept_sd <- NULL
+  }
 
   # Make readable parameter names for generated quantities
   fnames_oi <- stanfit@sim$fnames_oi
@@ -1383,6 +1396,8 @@ if (class_effects == "exchangeable") {
     out$nodesplit <- nodesplit
   }
 
+
+
   return(out)
 }
 
@@ -1437,7 +1452,7 @@ nma.fit <- function(ipd_x, ipd_y,
                     int_thin = 0,
                     int_check = TRUE,
                     basis,
-                    random_baseline = NULL,
+                    random_baseline = FALSE,
                     prior_intercept_sd) {
 
   if (missing(ipd_x)) ipd_x <- NULL
@@ -1552,8 +1567,11 @@ if (class_effects == "exchangeable") {
 
   # Check priors
   check_prior(prior_intercept)
-  if (random_baseline){
+  if (random_baseline == TRUE){
     check_prior(prior_intercept_sd)
+  } else {
+    # Dummy class effects priors for non-CE models, not used but requested by Stan data
+    prior_intercept_sd <- half_normal(1)
   }
   check_prior(prior_trt)
   if (trt_effects == "random") check_prior(prior_het)
@@ -1777,6 +1795,7 @@ if (class_effects == "exchangeable") {
     which_CE = if (class_effects == "exchangeable") which_CE else numeric(0),
     which_CE_sd = if (class_effects == "exchangeable") which_CE_sd else numeric(0),
     class_effects = ifelse(class_effects == "exchangeable", 1, 0),
+    #random baseline effect
     random_baseline = ifelse(random_baseline == TRUE, 1, 0)
     )
 
@@ -1810,11 +1829,10 @@ if (class_effects == "exchangeable") {
     )
 
   # Check if running baseline synthesis
-  if (!is.null(random_baseline) && random_baseline == 1) {
-    random_baseline <- 1
+  if (!is.null(random_baseline) && random_baseline == TRUE) {
     prior_intercept_sd <- get_prior_call(prior_intercept_sd)
   } else {
-    random_baseline <- 0
+    random_baseline <- FALSE
   }
 
   # Standard pars to monitor
@@ -1836,11 +1854,6 @@ if (class_effects == "exchangeable") {
     pars <- c(pars, "omega")
   }
 
-  # Monitor baseline SD for random baselines
-  if (random_baseline){
-    pars <- c(pars, "phi")
-  }
-
   # Monitor cumulative integration error if using numerical integration
   if (n_int > 1 && !is_survival && int_thin > 0) {
     if (has_agd_arm) pars <- c(pars, "theta_bar_cum_agd_arm")
@@ -1850,6 +1863,11 @@ if (class_effects == "exchangeable") {
   # Monitor class effects if class effects in use
   if (class_effects == "exchangeable") {
     pars <- c(pars, "class_mean", "class_sd")
+  }
+
+  # Monitor baseline mean and sd if random baselines in use
+  if (random_baseline == TRUE) {
+    pars <- c(pars, "baseline_mean", "baseline_sd")
   }
 
   # Set adapt_delta, but respect other control arguments if passed in ...
