@@ -2,27 +2,24 @@
 
 // -- Priors --
 // Study-specific baselines
-if (random_baseline == 1) {
-    // Hyper‐priors for the random‐baseline case
-    prior_select2_lp(baseline_mean, prior_intercept_dist, prior_intercept_location, prior_intercept_scale, prior_intercept_df);
-    prior_select2_lp(baseline_sd, prior_intercept_sd_dist, prior_intercept_sd_location, prior_intercept_sd_scale, prior_intercept_sd_df);
-
-  // Hierarchical prior
-  mu ~ normal(baseline_mean, baseline_sd);
-} else {
-  // “Fixed baseline” approach, or separate identical priors
+if (random_baseline == 0) {
   prior_select_lp(mu, prior_intercept_dist, prior_intercept_location, prior_intercept_scale, prior_intercept_df);
+} else {
+  prior_select2_lp(baseline_mean, prior_intercept_dist, prior_intercept_location, prior_intercept_scale, prior_intercept_df);
+  prior_select2_lp(baseline_sd, prior_intercept_sd_dist, prior_intercept_sd_location, prior_intercept_sd_scale, prior_intercept_sd_df);
+
+  mu = baseline_mean + baseline_sd * z_baseline;
 }
 
 // Treatment effects
-  if (class_effects == 0) {
-    prior_select_lp(d, prior_trt_dist, prior_trt_location, prior_trt_scale, prior_trt_df);
-  } else {
-    // Priors for class mean parameters
-    prior_select_lp(class_mean, prior_class_mean_dist, prior_class_mean_location, prior_class_mean_scale, prior_class_mean_df);
+if (class_effects == 0) {
+  prior_select_lp(d, prior_trt_dist, prior_trt_location, prior_trt_scale, prior_trt_df);
+} else {
+  // Priors for class mean parameters
+  prior_select_lp(class_mean, prior_class_mean_dist, prior_class_mean_location, prior_class_mean_scale, prior_class_mean_df);
 
-    // Priors for class standard deviation parameters
-    prior_select_lp(class_sd, prior_class_sd_dist, prior_class_sd_location, prior_class_sd_scale, prior_class_sd_df);
+  // Priors for class standard deviation parameters
+  prior_select_lp(class_sd, prior_class_sd_dist, prior_class_sd_location, prior_class_sd_scale, prior_class_sd_df);
 }
 
 // Regression parameters
@@ -75,3 +72,4 @@ if (class_effects) {
 
 // Draw auxiliary variables from standard normal
 z_class ~ std_normal();
+z_baseline ~ std_normal();

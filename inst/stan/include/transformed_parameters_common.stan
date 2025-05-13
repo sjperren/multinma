@@ -7,10 +7,10 @@ vector[ni_ipd] eta_ipd; // IPD linear predictor
 // -- RE deltas --
 // Avoid evaluating tau[1] when no RE (u_delta is zero dim in this case)
 vector[n_delta] f_delta =
-  RE ? (
-    RE_sparse ?
-      tau[1] * csr_matrix_times_vector(n_delta, n_delta, RE_L_w, RE_L_v, RE_L_u, u_delta) :
-      tau[1] * RE_L * u_delta
+RE ? (
+  RE_sparse ?
+  tau[1] * csr_matrix_times_vector(n_delta, n_delta, RE_L_w, RE_L_v, RE_L_u, u_delta) :
+  tau[1] * RE_L * u_delta
   ) : u_delta;
 
 
@@ -33,9 +33,12 @@ vector[n_delta] f_delta =
   vector[ni_agd_contrast] eta_agd_contrast_bar;
 
   // -- Study baselines --
-  // Pull out mu from allbeta
-  if (totns) {
-    mu = allbeta[1:totns];
+  if (random_baseline == 1) {
+    mu = baseline_mean + baseline_sd * z_baseline;
+  } else {
+    if (totns) {
+      mu = allbeta[1:totns];
+    }
   }
 
   // -- Regression predictors --
