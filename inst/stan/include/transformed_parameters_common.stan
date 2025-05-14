@@ -33,12 +33,15 @@ RE ? (
   vector[ni_agd_contrast] eta_agd_contrast_bar;
 
   // -- Study baselines --
+  if (totns) {
+    mu = allbeta[1:totns];
+  }
+
+  vector[random_baseline ? totns : 0] f_baseline; // product of baseline sds and ~N(0,1) to be added onto linear predictor
+
   if (random_baseline == 1) {
-    mu = baseline_mean + baseline_sd * z_baseline;
-  } else {
-    if (totns) {
-      mu = allbeta[1:totns];
-    }
+    f_baseline = baseline_mean - mu + baseline_sd .* z_baseline;
+    mu = baseline_mean + baseline_sd .* z_baseline;
   }
 
   // -- Regression predictors --

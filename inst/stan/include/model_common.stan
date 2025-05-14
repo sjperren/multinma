@@ -8,7 +8,7 @@ if (random_baseline == 0) {
   prior_select2_lp(baseline_mean, prior_intercept_dist, prior_intercept_location, prior_intercept_scale, prior_intercept_df);
   prior_select2_lp(baseline_sd, prior_intercept_sd_dist, prior_intercept_sd_location, prior_intercept_sd_scale, prior_intercept_sd_df);
 
-  mu = baseline_mean + baseline_sd * z_baseline;
+  allbeta[1:totns] ~ std_normal();
 }
 
 // Treatment effects
