@@ -427,7 +427,7 @@ baseline_synthesis <- function(network,
 
   check_prior(prior_intercept_sd)
 
-  out <- nma(network = network,
+  fit <- nma(network = network,
              consistency = consistency,
              trt_effects = trt_effects,
              regression = regression,
@@ -461,10 +461,30 @@ baseline_synthesis <- function(network,
              random_baseline = random_baseline,
              prior_intercept_sd = prior_intercept_sd)
 
-class(out) <- c("baseline_synthesis", class(out))
-return(out)
+  ss <- rstan::summary(fit$stanfit,
+                       pars  = c("baseline_new","baseline_mean","baseline_sd","mu"),
+                       probs = c(0.025, 0.5, 0.975))$summary
+
+  keep <- grepl("^(baseline_new|baseline_mean|baseline_sd|mu\\[)", rownames(ss))
+  summary_df <- as.data.frame(ss[keep, , drop = FALSE])
+  summary_df$parameter <- rownames(ss)[keep]
+  summary_df <- summary_df[, c("parameter", setdiff(names(summary_df), "parameter"))]
+  rownames(summary_df) <- NULL
+
+  structure(
+    list(
+      summary = summary_df,
+      fit = fit
+    ),
+    class = c("baseline_synthesis")
+  )
 }
 
+#' @export
+print.baseline_synthesis <- function(x, ...) {
+  print(x$summary, ...)
+  invisible(x)
+}
 
 
 
