@@ -4,16 +4,21 @@
 \alias{alm}
 \title{Aggregate level matching}
 \usage{
-alm(network, covariates = NULL, scale = FALSE, binary_covariates = NULL)
+alm(
+  network,
+  covariates = NULL,
+  method = c("unscaled", "scaled", "T test"),
+  binary_covariates = NULL
+)
 }
 \arguments{
 \item{network}{An \code{nma_data} object.}
 
 \item{covariates}{Character vector of covariate names.}
 
-\item{scale}{Logical; whether to scale differences using pooled SDs.}
-
 \item{binary_covariates}{Optional character vector of binary covariate names.}
+
+\item{scale}{Logical; whether to scale differences using pooled SDs.}
 }
 \value{
 A list with a \code{summary} dataframe and \code{distance_matrix}.

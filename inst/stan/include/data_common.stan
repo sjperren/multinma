@@ -18,8 +18,8 @@ array[ni_agd_contrast] int<lower=1> agd_contrast_trt;
 array[ni_agd_contrast] int<lower=1> agd_contrast_trt_b;
 
 // Study IDs
-// array[max(ipd_arm)] int<lower=1> ipd_study;
-// array[ni_agd_arm] int<lower=1> agd_arm_study;
+array[max(ipd_arm)] int<lower=1> ipd_study;
+array[ni_agd_arm] int<lower=1> agd_arm_study;
 // array[ni_agd_contrast] int<lower=1> agd_contrast_study;
 
 int<lower=1> nt; // number of treatments

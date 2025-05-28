@@ -97,6 +97,13 @@ RE ? (
     }
   }
 
+  // Add random baseline contribution
+  if (random_baseline) {
+    for (i in 1:ni_ipd) {
+      eta_ipd[i] += f_baseline[ipd_study[ipd_arm[i]]];
+    }
+  }
+
   // -- AgD model (contrast-based) --
   if (ni_agd_contrast) {
     if (nint_max > 1) {

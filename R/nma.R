@@ -1570,7 +1570,7 @@ if (class_effects == "exchangeable") {
   if (random_baseline == TRUE){
     check_prior(prior_intercept_sd)
   } else {
-    # Dummy class effects priors for non-CE models, not used but requested by Stan data
+    # Dummy intercept priors for fixed baseline models, not used but requested by Stan data
     prior_intercept_sd <- half_normal(1)
   }
   check_prior(prior_trt)
@@ -1775,8 +1775,8 @@ if (class_effects == "exchangeable") {
     agd_contrast_trt_b = as.array(agd_contrast_trt_b),
     agd_contrast_y = if (has_agd_contrast) as.array(agd_contrast_y$.y) else numeric(),
     agd_contrast_Sigma = Sigma,
-    # ipd_study = ipd_study,
-    # agd_arm_study = agd_arm_study,
+    ipd_study = ipd_study,
+    agd_arm_study = agd_arm_study,
     # agd_contrast_study = agd_contrast_study,
     # Random effects
     RE = switch(trt_effects, fixed = 0, random = 1),
@@ -1865,9 +1865,9 @@ if (class_effects == "exchangeable") {
     pars <- c(pars, "class_mean", "class_sd")
   }
 
-  # Monitor baseline mean and sd if random baselines in use
+  # Monitor baseline mean, sd and new if random baselines in use
   if (random_baseline == TRUE) {
-    pars <- c(pars, "baseline_mean", "baseline_sd")
+    pars <- c(pars, "baseline_mean", "baseline_sd", "baseline_new")
   }
 
   # Set adapt_delta, but respect other control arguments if passed in ...
