@@ -15,5 +15,5 @@ vector[class_effects ? n_class_trts : 0] z_class;
 vector[random_baseline ? totns : 0] z_baseline;
 
 // Study baselines
-real<lower=0> baseline_sd;
-real baseline_mean;
+vector<lower=0>[random_baseline] baseline_sd;
+vector[random_baseline] baseline_mean;
