@@ -150,7 +150,7 @@ set_ipd <- function(data,
       inform(glue::glue("Single-arm stud{if (length(single_arm_studies) > 1) 'ies' else 'y'} present in the network: ",
                         glue::glue_collapse(glue::double_quote(as.character(single_arm_studies)), sep = ", ", last = " and "), "."))
     } else {
-      abort(glue::glue("Single-arm studies are not supported: issue with stud{if (length(single_arm_studies) > 1) 'ies' else 'y'} ",
+      warn(glue::glue("Single-arm studies detected: issue with stud{if (length(single_arm_studies) > 1) 'ies' else 'y'} ",
                        glue::glue_collapse(glue::double_quote(single_arm_studies), sep = ", ", last = " and "), "."))
     }
   }
@@ -338,7 +338,7 @@ set_agd_arm <- function(data,
     dplyr::pull(.data$.study)
 
   if (length(single_arm_studies)) {
-    abort(glue::glue("Single-arm studies are not supported: issue with stud{if (length(single_arm_studies) > 1) 'ies' else 'y'} ",
+    warn(glue::glue("Single-arm studies detected: issue with stud{if (length(single_arm_studies) > 1) 'ies' else 'y'} ",
                      glue::glue_collapse(glue::double_quote(single_arm_studies), sep = ", ", last = " and "), "."))
   }
 
@@ -587,7 +587,7 @@ set_agd_contrast <- function(data,
     dplyr::pull(.data$.study)
 
   if (length(single_arm_studies)) {
-    abort(glue::glue("Single-arm studies are not supported: issue with stud{if (length(single_arm_studies) > 1) 'ies' else 'y'} ",
+    warn(glue::glue("Single-arm studies detected: issue with stud{if (length(single_arm_studies) > 1) 'ies' else 'y'} ",
                      glue::glue_collapse(glue::double_quote(single_arm_studies), sep = ", ", last = " and "), "."))
   }
 

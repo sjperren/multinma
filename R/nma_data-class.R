@@ -155,6 +155,44 @@ print.nma_data <- function(x, ..., n = 10) {
     # cat("\n")
   }
 
+  # Check for single-arm studies
+  # Initialize variables to empty vectors
+  single_arm_studies_ipd <- character(0)
+  single_arm_studies_agd <- character(0)
+  single_arm_studies_agd_cont <- character(0)
+
+  if (!is.null(x$ipd) && nrow(x$ipd) > 0){
+  single_arm_studies_ipd <- x$ipd %>%
+    dplyr::select(.study, .trt) %>%
+    dplyr::distinct(.study, .trt) %>%
+    dplyr::group_by(.study) %>%
+    dplyr::filter(dplyr::n() == 1) %>%
+    dplyr::pull(.study) %>%
+    as.character()
+  }
+  if (!is.null(x$agd_arm) && nrow(x$agd_arm) > 0) {
+  single_arm_studies_agd <- x$agd_arm %>%
+    dplyr::select(.study, .trt) %>%
+    dplyr::group_by(.study) %>%
+    dplyr::filter(dplyr::n() == 1) %>%
+    dplyr::pull(.study) %>%
+    as.character()
+  }
+  if (!is.null(x$agd_contrast) && nrow(x$agd_contrast) > 0) {
+  single_arm_studies_agd_cont <- x$agd_contrast %>%
+    dplyr::select(.study, .trt) %>%
+    dplyr::group_by(.study) %>%
+    dplyr::filter(dplyr::n() == 1) %>%
+    dplyr::pull(.study) %>%
+    as.character()
+  }
+
+  single_arm_studies <- unique(
+    c(single_arm_studies_ipd,
+      single_arm_studies_agd,
+      single_arm_studies_agd_cont)
+  )
+
   sec_header()
   if (!is.null(x$classes)) {
     cglue("Total number of treatments: {length(x$treatments)}, in {nlevels(x$classes)} classes")
@@ -164,7 +202,9 @@ print.nma_data <- function(x, ..., n = 10) {
   cglue("Total number of studies: {length(x$studies)}")
   cglue("Reference treatment is: {levels(x$treatments)[1]}")
   cglue("Network is {if (is_network_connected(x)) green('connected') else red('disconnected')}")
-
+  if (length(single_arm_studies) > 0) {
+    cglue("Single-arm studies: {(single_arm_studies)}")
+  }
   invisible(x)
 }
 
