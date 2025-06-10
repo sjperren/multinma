@@ -57,11 +57,9 @@ fitted_agd_contrast = eta_agd_contrast_bar;
 }
 
 // Predictive distribution of baseline when random baselines are in use.
-real baseline_new;
+vector[random_baseline] baseline_new;
 // draw one future-study baseline per iteration
-if (random_baseline == 1) {
-  baseline_new = normal_rng(baseline_mean, baseline_sd);
-} else {
-  baseline_new = baseline_mean;
+if (random_baseline) {
+  baseline_new = to_vector(normal_rng(baseline_mean, baseline_sd));
 }
 

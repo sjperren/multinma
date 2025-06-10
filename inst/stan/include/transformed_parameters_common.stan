@@ -40,8 +40,11 @@ RE ? (
   vector[random_baseline ? totns : 0] f_baseline; // product of baseline sds and ~N(0,1) to be added onto linear predictor
 
   if (random_baseline == 1) {
-    f_baseline = baseline_mean - mu + baseline_sd .* z_baseline;
-    mu = baseline_mean + baseline_sd .* z_baseline;
+    real bmean = baseline_mean[1];
+    real bsd   = baseline_sd[1];
+
+    f_baseline = rep_vector(bmean, totns) - mu + bsd .* z_baseline;
+    mu = rep_vector(bmean, totns) + bsd .* z_baseline;
   }
 
   // -- Regression predictors --
