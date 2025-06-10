@@ -2440,10 +2440,11 @@ if (class_effects == "exchangeable") {
   }
   fnames_oi <- gsub("tau[1]", "tau", fnames_oi, fixed = TRUE)
   fnames_oi <- gsub("omega[1]", "omega", fnames_oi, fixed = TRUE)
+  if (random_baseline == TRUE) {
   fnames_oi <- gsub("baseline_mean[1]", "baseline_mean", fnames_oi, fixed = TRUE)
   fnames_oi <- gsub("baseline_sd[1]", "baseline_sd", fnames_oi, fixed = TRUE)
   fnames_oi <- gsub("baseline_new[1]", "baseline_new", fnames_oi, fixed = TRUE)
-
+  }
 
   if (likelihood == "ordered") {
     if (has_ipd) l_cat <- colnames(ipd_y$.r)[-1]

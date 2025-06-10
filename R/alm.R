@@ -471,41 +471,15 @@ baseline_synthesis <- function(network,
   summary_df <- summary_df[, c("parameter", setdiff(names(summary_df), "parameter"))]
   rownames(summary_df) <- NULL
 
-  structure(
-    list(
-      summary = summary_df,
-      fit = fit
-    ),
-    class = c("baseline_synthesis", "stan_nma")
-  )
+  fit$baseline_summary <- summary_df
 
-  out <- list(network = network,
-              stanfit = stanfit,
-              trt_effects = trt_effects,
-              consistency = consistency,
-              regression = regression,
-              aux_regression = aux_regression,
-              class_interactions = if (!is.null(regression) && !is.null(network$classes)) class_interactions else NULL,
-              xbar = xbar,
-              likelihood = likelihood,
-              link = link,
-              aux_by = if (has_aux_by) colnames(get_aux_by_data(aux_dat, by = aux_by)) else NULL,
-              priors = list(prior_intercept = if (has_intercepts) prior_intercept else NULL,
-                            prior_trt = prior_trt,
-                            prior_class_mean = if (class_effects == "exchangeable") prior_class_mean else NULL,
-                            prior_class_sd = if (class_effects == "exchangeable") prior_class_sd else NULL,
-                            prior_het = if (trt_effects == "random") prior_het else NULL,
-                            prior_het_type = if (trt_effects == "random") prior_het_type else NULL,
-                            prior_reg = if (!is.null(regression) && !is_only_offset(regression)) prior_reg else NULL,
-                            prior_aux = if (has_aux) prior_aux else NULL,
-                            prior_aux_reg = if (has_aux_regression) prior_aux_reg else NULL))
-
-  return(out)
+  class(fit) <- c("baseline_synthesis", class(fit))
+  fit
 }
 
 #' @export
 print.baseline_synthesis <- function(x, ...) {
-  print(x$summary, ...)
+  print(x$baseline_summary)
   invisible(x)
 }
 
