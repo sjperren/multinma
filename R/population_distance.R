@@ -1,19 +1,20 @@
-#' Aggregate level matching
+#' Comparing population covariates
 #'
-#' Runs aggregate level matching across studies on different subnetworks.
+#' Runs distance tests between multivariate distributions across studies on different subnetworks.
 #'
 #' @param network An `nma_data` object.
 #' @param covariates Character vector of covariate names.
 #' @param scale Logical; whether to scale differences using pooled SDs.
+#' @param method Character; one of "unscaled", "scaled", or "energy". Determines the distance calculation method.
 #' @param binary_covariates Optional character vector of binary covariate names.
 #'
 #' @return A list with a `summary` dataframe and `distance_matrix`.
 #' @export
 
-alm <- function(network,
-                covariates = NULL,
-                method = c("unscaled", "scaled"),
-                binary_covariates = NULL) {
+population_distance <- function(network,
+                                covariates = NULL,
+                                method = c("unscaled", "scaled", "energy"),
+                                binary_covariates = NULL) {
 
   # Check method argument
   method <- match.arg(method)
@@ -28,6 +29,12 @@ alm <- function(network,
 
   if (all(purrr::map_lgl(network, is.null))) {
     abort("Empty network.")
+  }
+
+  if (method == "energy") {
+    if(nrow(network$agd_arm) > 0 && !inherits(network, "mlnmr_data")) {
+    abort("Expecting a `mlnmr_data` object, as created by the function `add_integration` when using the `energy` method with aggregate data.")
+    }
   }
   # Checks for covariates argument
   if (is.null(covariates)) {
@@ -53,6 +60,13 @@ alm <- function(network,
   }
 
   # Check AGD covariates (exact or with "_mean" suffix)
+  if (method == "energy" && nrow(network$agd_arm) > 0) {
+    missing_covs <- covariates[!covariates %in% network$int_names]
+    if (length(missing_covs) > 0) {
+      abort(glue::glue("The following covariates are not in `network$int_names`: {paste(missing_covs, collapse = ', ')}. ",
+                       "When using aggregate data, ensure all covariates have been included via the `add_integration()` function."))
+    }
+  }
   agd_covariates <- c(colnames(network$agd_contrast), colnames(network$agd_arm))
   agd_covariates_base <- unique(c(
     agd_covariates,
@@ -65,6 +79,7 @@ alm <- function(network,
   }
 
   # Process IPD: Convert logical to numeric and average by study
+  if (method != "energy") {
   ipd_covariate_data <- network$ipd
   ipd_covariate_data[covariates] <- lapply(ipd_covariate_data[covariates], function(x) {
     if (is.logical(x)) as.numeric(x) else x
@@ -76,7 +91,6 @@ alm <- function(network,
                                              sd = ~ sd(.x, na.rm = TRUE))),
       .groups = "drop"
     )
-
   # AgD function to get means
   extract_agd_means <- function(agd_df, binary_covariates = NULL) {
     if (nrow(agd_df) == 0) return(NULL)
@@ -121,12 +135,11 @@ alm <- function(network,
         df[[paste0(cov, "_sd")]] <- NULL
       }
     }
-
+  }
     # Update the covariates list inside alm(), if needed
     assign("covariates", retained_covariates, envir = parent.env(environment()))
 
     return(df)
-  }
 
   agd_contrast_means <- extract_agd_means(network$agd_contrast, binary_covariates)
   agd_arm_means <- extract_agd_means(network$agd_arm, binary_covariates)
@@ -286,22 +299,29 @@ alm <- function(network,
     distance_matrix = dist_matrix,
     distance_matrix_full = dist_matrix_full
   ))
+  }
+
+  if (method == "energy") {
+    # Energy distance calculation
+  library(energy)
+
+}
 }
 
-#' Plot distance matrix from `alm()`
+#' Plot distance matrix from `population_distance()`
 #'
-#' Produces a coloured `gt` table of distances from `alm()`.
+#' Produces a coloured `gt` table of distances from `population_distance()`.
 #'
-#' @param alm_output Output from `alm()`.
+#' @param x Output from `alm()`.
 #'
 #' @return A `gt` table.
 #' @export
 
 # Create a coloured table from the output of alm()
-plot_alm_matrix <- function(alm_output) {
-  mat <- alm_output$distance_matrix
-  mat_full <- alm_output$distance_matrix_full
-  summary_df <- alm_output$summary
+plot_alm_matrix <- function(x) {
+  mat <- x$distance_matrix
+  mat_full <- x$distance_matrix_full
+  summary_df <- x$summary
 
   # Convert matrix to dataframe with .study column
   df <- as.data.frame(mat)
