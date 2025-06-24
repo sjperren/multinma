@@ -280,6 +280,7 @@ nma <- function(network,
                 class_interactions = c("common", "exchangeable", "independent"),
                 class_effects = c("independent", "common", "exchangeable"),
                 class_sd =  c("independent", "common"),
+                connect_baseline = NULL,
                 likelihood = NULL,
                 link = NULL,
                 ...,
@@ -363,6 +364,47 @@ nma <- function(network,
     # Set network classes vector
     network$classes <- network$treatments
   }
+
+  # Check connect_baseline
+  if (!is.null(connect_baseline)) {
+    # wrap a single spec in a list
+    if (inherits(connect_baseline, "nma_connect")) {
+      connect_baseline <- list(connect_baseline)
+    }
+    # check it’s a list of valid specs
+    if (!is.list(connect_baseline) ||
+        !all(vapply(connect_baseline,
+                    inherits, logical(1), "nma_connect"))) {
+      abort("`connect_baseline` must be a con(...) or list of con(...)")
+    }
+  }
+
+  if (!is.null(connect_baseline)) {
+  for (spec in connect_baseline) {
+    if (spec$type == "random") {
+      if (is.null(spec$baseline))
+        abort("For random connection on studies ", paste(spec$studies, collapse = ", ")," you must supply a `baseline` prior.")
+      if (!inherits(spec$baseline, c("nma_prior")))
+        abort("`baseline` must be a valid prior when type = 'random'.")
+    } else {
+      if (!is.null(spec$baseline)) {
+        warning(
+          sprintf(
+            "Baseline prior supplied for fixed connection on studies [%s]; ignoring it.",
+            paste(spec$studies, collapse = ", ")
+          ),
+          call. = FALSE
+        )
+        # drop it so nothing downstream ever sees it
+        spec$baseline <- NULL
+      }
+    }
+  }
+  }
+
+
+
+
 
   # Check class_sd
   if (is.list(class_sd)) {
@@ -3647,4 +3689,29 @@ get_aux_by_data <- function(data, by, add_study = TRUE) {
 aux_needs_integration <- function(aux_regression, aux_by) {
   (!is.null(aux_regression) && length(setdiff(colnames(attr(terms(aux_regression), "factor")), c(".study", ".trt", ".trtclass"))) > 0) ||
     (!is.null(aux_by) && length(setdiff(aux_by, c(".study", ".trt", ".trtclass"))) > 0)
+}
+
+#' Create a connect object for NMA
+#' #' @param type Type of connection, either "fixed" or "random"
+#' #' @param studies Character vector of study names
+#' #' @param baseline_prior Prior when running a baseline random effects model,
+#' @noRd
+con <- function(type = c("fixed", "random"),
+                studies,
+                baseline_prior = NULL) {
+  type    <- match.arg(type)
+  studies <- as.character(studies)
+  if (length(studies) < 1)
+    stop("`studies` must be a non-empty character vector.")
+
+  if (type == "random" && is.null(baseline_prior)) {
+    stop("`baseline_prior` must be provided when type = 'random'.")
+  }
+
+  structure(
+    list(type      = type,
+         studies   = studies,
+         baseline_prior  = baseline_prior),
+    class = "nma_connect"
+  )
 }
