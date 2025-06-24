@@ -135,12 +135,12 @@ population_distance <- function(network,
         df[[paste0(cov, "_sd")]] <- NULL
       }
     }
-  }
+
     # Update the covariates list inside alm(), if needed
     assign("covariates", retained_covariates, envir = parent.env(environment()))
 
     return(df)
-
+  }
   agd_contrast_means <- extract_agd_means(network$agd_contrast, binary_covariates)
   agd_arm_means <- extract_agd_means(network$agd_arm, binary_covariates)
 
@@ -304,10 +304,86 @@ population_distance <- function(network,
   if (method == "energy") {
     # Energy distance calculation
   library(energy)
+    ipd_data <- network$ipd %>%
+      dplyr::select(.study, dplyr::all_of(covariates)) %>%
+      dplyr::group_split(.study)
 
-}
-}
+    # Assign names
+    names(ipd_data) <- network$ipd %>%
+      dplyr::distinct(.study) %>%
+      dplyr::pull(.study)
 
+    # Drop .study column from each tibble
+    ipd_data <- lapply(ipd_data, function(df) df[, setdiff(names(df), ".study"), drop = FALSE])
+
+    # Subset to .study and .int_* columns
+    int_cols <- grep("^\\.int_", names(network$agd_arm), value = TRUE)
+    agd_arm_subset <- network$agd_arm[, c(".study", int_cols)]
+
+    # Split by study, then remove the `.study` column from each
+    agd_by_study <- lapply(split(agd_arm_subset, agd_arm_subset$.study), function(df) {
+      # Remove .study column
+      df <- df[ , int_cols, drop = FALSE]
+
+      # For each .int_* column (which is a list of vectors), flatten into one vector
+      covariate_data <- lapply(df, function(var_list) {
+        unlist(var_list, use.names = FALSE)  # combine all arms into a single vector
+      })
+
+      covariate_df <- as.data.frame(covariate_data)
+      # Rename columns: remove ".int_" prefix
+      names(covariate_df) <- gsub("^\\.int_", "", names(covariate_df))
+
+      return(covariate_df)
+    })
+
+    # Remove any studies in agd_by_study that are NULL or have 0 rows
+    agd_by_study <- Filter(function(df) {
+      !is.null(df) && nrow(df) > 0
+    }, agd_by_study)
+
+    all_studies <- c(ipd_data, agd_by_study)
+
+    #Generate all unique study‐pairs
+    study_names <- names(all_studies)
+    pairs <- combn(study_names, 2, simplify = FALSE)
+
+    # Loop through pairs, bind & test
+    energy_results <- lapply(pairs, function(p) {
+      # Pull and tag each study’s data
+      df1 <- all_studies[[p[1]]] %>% mutate(.study = p[1])
+      df2 <- all_studies[[p[2]]] %>% mutate(.study = p[2])
+
+      # Record group sizes
+      sizes <- c(nrow(df1), nrow(df2))
+
+      # Combine and compute distance on covariates only
+      X <- bind_rows(df1, df2) %>% select(-.study) %>% as.matrix()
+      d <- dist(X)
+
+      # Run the energy test
+      set.seed(1234)
+      et <- eqdist.etest(d, sizes = sizes, distance = TRUE, R = 199)
+
+      # Return a one‐row summary
+      data.frame(
+        study1    = p[1],
+        study2    = p[2],
+        size1     = sizes[1],
+        size2     = sizes[2],
+        statistic = et$statistic,
+        p.value   = et$p.value,
+        row.names = NULL
+      )
+    })
+
+    # 4. Tidy up into a single data.frame
+    summary_results <- bind_rows(energy_results)
+    class(summary_results) <- c("energy_distance_results", class(summary_results))
+
+    return(summary_results)
+  }
+}
 #' Plot distance matrix from `population_distance()`
 #'
 #' Produces a coloured `gt` table of distances from `population_distance()`.
@@ -319,6 +395,63 @@ population_distance <- function(network,
 
 # Create a coloured table from the output of alm()
 plot_alm_matrix <- function(x) {
+  if (inherits(x, "energy_distance_results")) {
+    studies <- sort(unique(c(x$study1, x$study2)))
+    n       <- length(studies)
+
+    # 2. Init empty matrices
+    stat_mat <- matrix(NA,   n, n, dimnames = list(studies, studies))
+    pval_mat <- matrix(NA,   n, n, dimnames = list(studies, studies))
+
+    # look up numeric positions of study1 & study2 in your ordering
+    idx1 <- match(x$study1, studies)
+    idx2 <- match(x$study2, studies)
+
+    for(i in seq_along(idx1)) {
+      # force the larger index into the ROW, the smaller into the COL
+      r <- max(idx1[i], idx2[i])
+      c <- min(idx1[i], idx2[i])
+      stat_mat[r, c] <- x$statistic[i]
+      pval_mat[r, c] <- x$p.value[i]
+    }
+
+    # 4. Combine into one character matrix
+    combo <- matrix("", n, n, dimnames = list(studies, studies))
+    for(i in seq_len(n)) for(j in seq_len(n)) {
+      if (!is.na(stat_mat[i,j])) {
+        combo[i,j] <- sprintf("%.2f\n(p=%.3f)",
+                              stat_mat[i,j],
+                              pval_mat[i,j])
+      }
+    }
+
+    # — 5. Fill diagonal with each study’s N —
+    sizes_by_study <- sapply(studies, function(s) {
+      # pick up the unique size1 or size2 for that study
+      sz1 <- unique(x$size1[x$study1 == s])
+      sz2 <- unique(x$size2[x$study2 == s])
+      sz  <- unique(c(sz1, sz2))
+      if (length(sz) > 1) warning("Multiple sizes for ", s, ": ", paste(sz, collapse=","))
+      sz[1]
+    })
+    diag(combo) <- as.character(sizes_by_study)
+
+    # 5. Blank out diagonal & upper triangle
+    combo[upper.tri(combo)] <- ""
+
+    tbl <- gridExtra::tableGrob(
+      combo,
+      rows = studies,
+      theme = gridExtra::ttheme_minimal(
+        core = list(fg_params = list(fontsize=10)),
+        colhead = list(fg_params = list(fontsize=11, fontface="bold"))
+      )
+    )
+    grid::grid.newpage()
+    grid::grid.draw(tbl)
+
+    invisible(tbl)
+  } else {
   mat <- x$distance_matrix
   mat_full <- x$distance_matrix_full
   summary_df <- x$summary
@@ -406,7 +539,11 @@ plot_alm_matrix <- function(x) {
     subnetwork_table = gt_tbl,
     full_table = gt_tbl_full)
   )
+  }
 }
+
+
+
 
 #' @export
 baseline_synthesis <- function(network,
