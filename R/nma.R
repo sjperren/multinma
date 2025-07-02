@@ -24,6 +24,9 @@
 #'   character vectors, each of which describe a set classes for which to share a common class SD;
 #'   any list names will be used to name the output parameters, otherwise the name will be taken
 #'   from the first class in each set.
+#' @param connect_baseline Optional baseline connections. Supply one or more
+#'   `con()` specifications to share baselines between studies. Random
+#'   connections require a `baseline_prior` distribution.
 #' @param likelihood Character string specifying a likelihood, if unspecified
 #'   will be inferred from the data (see details)
 #' @param link Character string specifying a link function, if unspecified will
@@ -380,26 +383,26 @@ nma <- function(network,
   }
 
   if (!is.null(connect_baseline)) {
-  for (spec in connect_baseline) {
-    if (spec$type == "random") {
-      if (is.null(spec$baseline))
-        abort("For random connection on studies ", paste(spec$studies, collapse = ", ")," you must supply a `baseline` prior.")
-      if (!inherits(spec$baseline, c("nma_prior")))
-        abort("`baseline` must be a valid prior when type = 'random'.")
-    } else {
-      if (!is.null(spec$baseline)) {
-        warning(
-          sprintf(
-            "Baseline prior supplied for fixed connection on studies [%s]; ignoring it.",
-            paste(spec$studies, collapse = ", ")
-          ),
-          call. = FALSE
-        )
-        # drop it so nothing downstream ever sees it
-        spec$baseline <- NULL
+    for (spec in connect_baseline) {
+      if (spec$type == "random") {
+        if (is.null(spec$baseline_prior))
+          abort("For random connection on studies ", paste(spec$studies, collapse = ", "), " you must supply a `baseline_prior`.")
+        if (!inherits(spec$baseline_prior, c("nma_prior")))
+          abort("`baseline_prior` must be a valid prior when type = 'random'.")
+      } else {
+        if (!is.null(spec$baseline_prior)) {
+          warning(
+            sprintf(
+              "Baseline prior supplied for fixed connection on studies [%s]; ignoring it.",
+              paste(spec$studies, collapse = ", ")
+            ),
+            call. = FALSE
+          )
+          # drop it so nothing downstream ever sees it
+          spec$baseline_prior <- NULL
+        }
       }
     }
-  }
   }
 
 
@@ -1840,6 +1843,47 @@ if (class_effects == "exchangeable") {
     #random baseline effect
     random_baseline = ifelse(random_baseline == TRUE, 1, 0)
     )
+
+  # Baseline connections
+  if (!is.null(connect_baseline)) {
+    study_levels <- levels(network$studies)
+    n_con <- length(connect_baseline)
+    which_connect <- integer(length(study_levels))
+    connect_type <- integer(n_con)
+    prior_list <- vector("list", n_con)
+
+    for (i in seq_along(connect_baseline)) {
+      spec <- connect_baseline[[i]]
+      idx <- match(spec$studies, study_levels)
+      if (anyNA(idx)) abort("Studies in `connect_baseline` not found in network.")
+      which_connect[idx] <- i
+      connect_type[i] <- if (spec$type == "random") 2L else 1L
+      prior_list[[i]] <- if (!is.null(spec$baseline_prior)) spec$baseline_prior else flat()
+    }
+
+    prior_sd <- lapply(prior_list, prior_standat, par = "baseline_prior",
+                        valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
+
+    standat <- purrr::list_modify(standat,
+      n_connect = n_con,
+      which_connect = which_connect,
+      connect_type = connect_type,
+      baseline_prior_dist = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_dist"),
+      baseline_prior_location = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_location"),
+      baseline_prior_scale = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_scale"),
+      baseline_prior_df = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_df")
+    )
+  } else {
+    standat <- purrr::list_modify(standat,
+      n_connect = 0L,
+      which_connect = integer(length(levels(network$studies))),
+      connect_type = integer(),
+      baseline_prior_dist = numeric(),
+      baseline_prior_location = numeric(),
+      baseline_prior_scale = numeric(),
+      baseline_prior_df = numeric()
+    )
+  }
 
   # Add priors
   standat <- purrr::list_modify(standat,
@@ -3691,11 +3735,18 @@ aux_needs_integration <- function(aux_regression, aux_by) {
     (!is.null(aux_by) && length(setdiff(aux_by, c(".study", ".trt", ".trtclass"))) > 0)
 }
 
-#' Create a connect object for NMA
-#' #' @param type Type of connection, either "fixed" or "random"
-#' #' @param studies Character vector of study names
-#' #' @param baseline_prior Prior when running a baseline random effects model,
-#' @noRd
+#' Specify baseline connections
+#'
+#' Helper function for the `connect_baseline` argument of [nma()] to specify
+#' how study baselines are linked.
+#'
+#' @param type Type of connection, either "fixed" or "random".
+#' @param studies Character vector of study names.
+#' @param baseline_prior Prior distribution for the shared baseline mean when
+#'   `type = "random"`, as a [nma_prior] object.
+#'
+#' @return An object of class `nma_connect`.
+#' @export
 con <- function(type = c("fixed", "random"),
                 studies,
                 baseline_prior = NULL) {
