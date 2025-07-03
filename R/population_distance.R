@@ -630,6 +630,10 @@ baseline_synthesis <- function(network,
 
   fit$baseline_summary <- summary_df
 
+  # Store prior for baseline standard deviation for plotting
+  fit$priors$prior_intercept_sd <- prior_intercept_sd
+
+
   class(fit) <- c("baseline_synthesis", class(fit))
   fit
 }

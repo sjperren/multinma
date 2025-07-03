@@ -26,7 +26,7 @@
 #'   from the first class in each set.
 #' @param connect_baseline Optional baseline connections. Supply one or more
 #'   `con()` specifications to share baselines between studies. Random
-#'   connections require a `baseline_prior` distribution.
+#'   baseline require a `baseline_prior` distribution.
 #' @param likelihood Character string specifying a likelihood, if unspecified
 #'   will be inferred from the data (see details)
 #' @param link Character string specifying a link function, if unspecified will
@@ -623,6 +623,8 @@ nma <- function(network,
 
   # Are study intercepts present? Not if only contrast data
   has_intercepts <- has_agd_arm(network) || has_ipd(network)
+
+  has_intercept_sd <- !is.null(prior_intercept_sd)
 
   # Check priors
   check_prior(prior_intercept)
@@ -1233,6 +1235,7 @@ if (class_effects == "exchangeable") {
     likelihood = likelihood,
     link = link,
     consistency = consistency,
+    connect_baseline = connect_baseline,
     ...,
     prior_intercept = prior_intercept,
     prior_trt = prior_trt,
@@ -1420,6 +1423,7 @@ if (class_effects == "exchangeable") {
               link = link,
               aux_by = if (has_aux_by) colnames(get_aux_by_data(aux_dat, by = aux_by)) else NULL,
               priors = list(prior_intercept = if (has_intercepts) prior_intercept else NULL,
+                            prior_intercept_sd = if (has_intercept_sd) prior_intercept_sd else NULL,
                             prior_trt = prior_trt,
                             prior_class_mean = if (class_effects == "exchangeable") prior_class_mean else NULL,
                             prior_class_sd = if (class_effects == "exchangeable") prior_class_sd else NULL,
@@ -1463,6 +1467,7 @@ if (class_effects == "exchangeable") {
 #' @param which_CE Class effects means design vector (0 = no class)
 #' @param which_CE_sd Class effects SDs design vector (0 = no class)
 #' @param basis Spline basis for `mspline` and `pexp` models
+#' @param connect_baseline Optional baseline connections as created by [con()].
 #'
 #' @noRd
 nma.fit <- function(ipd_x, ipd_y,
@@ -1479,6 +1484,7 @@ nma.fit <- function(ipd_x, ipd_y,
                     likelihood = NULL,
                     link = NULL,
                     consistency = c("consistency", "ume", "nodesplit"),
+                    connect_baseline = NULL,
                     ...,
                     prior_intercept,
                     prior_trt,
@@ -1843,47 +1849,6 @@ if (class_effects == "exchangeable") {
     #random baseline effect
     random_baseline = ifelse(random_baseline == TRUE, 1, 0)
     )
-
-  # Baseline connections
-  if (!is.null(connect_baseline)) {
-    study_levels <- levels(network$studies)
-    n_con <- length(connect_baseline)
-    which_connect <- integer(length(study_levels))
-    connect_type <- integer(n_con)
-    prior_list <- vector("list", n_con)
-
-    for (i in seq_along(connect_baseline)) {
-      spec <- connect_baseline[[i]]
-      idx <- match(spec$studies, study_levels)
-      if (anyNA(idx)) abort("Studies in `connect_baseline` not found in network.")
-      which_connect[idx] <- i
-      connect_type[i] <- if (spec$type == "random") 2L else 1L
-      prior_list[[i]] <- if (!is.null(spec$baseline_prior)) spec$baseline_prior else flat()
-    }
-
-    prior_sd <- lapply(prior_list, prior_standat, par = "baseline_prior",
-                        valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
-
-    standat <- purrr::list_modify(standat,
-      n_connect = n_con,
-      which_connect = which_connect,
-      connect_type = connect_type,
-      baseline_prior_dist = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_dist"),
-      baseline_prior_location = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_location"),
-      baseline_prior_scale = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_scale"),
-      baseline_prior_df = vapply(prior_sd, `[[`, numeric(1), "baseline_prior_df")
-    )
-  } else {
-    standat <- purrr::list_modify(standat,
-      n_connect = 0L,
-      which_connect = integer(length(levels(network$studies))),
-      connect_type = integer(),
-      baseline_prior_dist = numeric(),
-      baseline_prior_location = numeric(),
-      baseline_prior_scale = numeric(),
-      baseline_prior_df = numeric()
-    )
-  }
 
   # Add priors
   standat <- purrr::list_modify(standat,
