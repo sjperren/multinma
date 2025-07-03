@@ -334,7 +334,7 @@ plot_prior_posterior <- function(x, ...,
                                                             gengamma = "beta_aux"),
                                            class_mean = "class_mean",
                                            class_sd = "class_sd",
-                                           baseline_mean, "baseline_mean",
+                                           baseline_mean = "baseline_mean",
                                            baseline_sd = "baseline_sd"))
 
   if (inherits(x, "baseline_synthesis") && "intercept" %in% prior) {
