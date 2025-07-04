@@ -320,6 +320,37 @@ nma <- function(network,
     prior_intercept_sd <- NULL
   }
 
+  # Check and apply connect_baseline specifications
+  if (!is.null(connect_baseline)) {
+    # Turn single con(...) into a list
+    if (inherits(connect_baseline, "nma_connect"))
+      connect_baseline <- list(connect_baseline)
+
+    # Check it’s a list of valid specs
+    if (!is.list(connect_baseline) ||
+        !all(vapply(connect_baseline, inherits, logical(1), "nma_connect"))) {
+      abort("`connect_baseline` must be a con(...) or list of con(...)")
+    }
+
+    for (spec in connect_baseline) {
+      if (spec$type == "fixed") {
+        if (!is.null(spec$baseline_prior)) {
+          warning(
+            sprintf(
+              "Baseline prior supplied for fixed connection on studies [%s]; ignoring it.",
+              paste(spec$studies, collapse = ", ")
+            ),
+            call. = FALSE
+          )
+        }
+        network <- apply_connect_fixed(network, spec$studies)
+      } else {
+        abort("`connect_baseline` type 'random' not yet implemented.")
+      }
+    }
+    connect_baseline <- NULL
+  }
+
   # Check network
   if (!inherits(network, "nma_data")) {
     abort("Expecting an `nma_data` object, as created by the functions `set_*`, `combine_network`, or `add_integration`.")
@@ -366,38 +397,6 @@ nma <- function(network,
 
     # Set network classes vector
     network$classes <- network$treatments
-  }
-
-  # Check and apply connect_baseline specifications
-  if (!is.null(connect_baseline)) {
-    # Wrap a single specification in a list
-    if (inherits(connect_baseline, "nma_connect"))
-      connect_baseline <- list(connect_baseline)
-
-    # Check it’s a list of valid specs
-    if (!is.list(connect_baseline) ||
-        !all(vapply(connect_baseline, inherits, logical(1), "nma_connect"))) {
-      abort("`connect_baseline` must be a con(...) or list of con(...)")
-    }
-
-    for (spec in connect_baseline) {
-      if (spec$type == "fixed") {
-        if (!is.null(spec$baseline_prior)) {
-          warning(
-            sprintf(
-              "Baseline prior supplied for fixed connection on studies [%s]; ignoring it.",
-              paste(spec$studies, collapse = ", ")
-            ),
-            call. = FALSE
-          )
-
-        }
-        network <- apply_connect_fixed(network, spec$studies)
-      } else {
-        abort("`connect_baseline` type 'random' not yet implemented.")
-      }
-    }
-    connect_baseline <- NULL
   }
 
   # Check class_sd
@@ -3738,16 +3737,15 @@ con <- function(type = c("fixed", "random"),
 apply_connect_fixed <- function(network, studies) {
   new_name <- paste(studies, collapse = " & ")
 
-  if (has_ipd(network) && all(studies %in% network$ipd$.study)) {
+  if (has_ipd(network)) {
     network$ipd$.study <-
       forcats::fct_collapse(network$ipd$.study, !!new_name := studies)
-  } else if (has_agd_arm(network) && all(studies %in% network$agd_arm$.study)) {
+  } if (has_agd_arm(network)) {
     network$agd_arm$.study <-
       forcats::fct_collapse(network$agd_arm$.study, !!new_name := studies)
-  } else if (has_agd_contrast(network) && all(studies %in% network$agd_contrast$.study)) {
-    abort("AgD contrast data cannot be combined with `connect_baseline`." )
-  } else {
-    abort("All studies in a fixed baseline connection must originate from the same data source (IPD or AgD arm-based).")
+  } if (has_agd_contrast(network)) {
+    network$agd_contrast$.study <-
+      forcats::fct_collapse(network$agd_contrast$.study, !!new_name := studies)
   }
 
   network$studies <- forcats::fct_collapse(network$studies, !!new_name := studies)
