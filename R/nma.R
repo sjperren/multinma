@@ -368,28 +368,20 @@ nma <- function(network,
     network$classes <- network$treatments
   }
 
-  # Check connect_baseline
+  # Check and apply connect_baseline specifications
   if (!is.null(connect_baseline)) {
-    # wrap a single spec in a list
-    if (inherits(connect_baseline, "nma_connect")) {
+    # Wrap a single specification in a list
+    if (inherits(connect_baseline, "nma_connect"))
       connect_baseline <- list(connect_baseline)
-    }
-    # check it’s a list of valid specs
+
+    # Check it’s a list of valid specs
     if (!is.list(connect_baseline) ||
-        !all(vapply(connect_baseline,
-                    inherits, logical(1), "nma_connect"))) {
+        !all(vapply(connect_baseline, inherits, logical(1), "nma_connect"))) {
       abort("`connect_baseline` must be a con(...) or list of con(...)")
     }
-  }
 
-  if (!is.null(connect_baseline)) {
     for (spec in connect_baseline) {
-      if (spec$type == "random") {
-        if (is.null(spec$baseline_prior))
-          abort("For random connection on studies ", paste(spec$studies, collapse = ", "), " you must supply a `baseline_prior`.")
-        if (!inherits(spec$baseline_prior, c("nma_prior")))
-          abort("`baseline_prior` must be a valid prior when type = 'random'.")
-      } else {
+      if (spec$type == "fixed") {
         if (!is.null(spec$baseline_prior)) {
           warning(
             sprintf(
@@ -398,17 +390,8 @@ nma <- function(network,
             ),
             call. = FALSE
           )
-          # drop it so nothing downstream ever sees it
-          spec$baseline_prior <- NULL
-        }
-      }
-    }
-  }
 
-  # Apply fixed baseline connections
-  if (!is.null(connect_baseline)) {
-    for (spec in connect_baseline) {
-      if (spec$type == "fixed") {
+        }
         network <- apply_connect_fixed(network, spec$studies)
       } else {
         abort("`connect_baseline` type 'random' not yet implemented.")
