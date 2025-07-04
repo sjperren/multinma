@@ -58,3 +58,20 @@ test_that("fixed baseline connection not allowed for contrast data", {
     "AgD contrast data"
   )
 })
+
+test_that("studies in a baseline connection must be the same data type", {
+  ipd_net <- set_ipd(plaque_psoriasis_ipd, study = studyc, trt = trtc, r = pasi75)
+  agd_net <- set_agd_arm(smoking, study = studyn, trt = trtc, r = r, n = n,
+                         trt_ref = "no")
+  mix_net <- combine_network(ipd_net, agd_net)
+
+  spec <- con("fixed", studies = c(levels(ipd_net$studies)[1], levels(agd_net$studies)[1]))
+
+  expect_error(
+    nma(mix_net, connect_baseline = spec,
+        prior_intercept = normal(scale = 10),
+        prior_trt = normal(scale = 10),
+        iter = 1, chains = 1),
+    "same type of data"
+  )
+})

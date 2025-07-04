@@ -26,7 +26,8 @@
 #'   from the first class in each set.
 #' @param connect_baseline Optional baseline connections. Supply one or more
 #'   `con()` specifications to share baselines between studies. Random
-#'   baseline require a `baseline_prior` distribution.
+#'   baseline require a `baseline_prior` distribution. All studies listed in a
+#'   single `con()` must originate from the same data type (IPD or AgD).
 #' @param likelihood Character string specifying a likelihood, if unspecified
 #'   will be inferred from the data (see details)
 #' @param link Character string specifying a link function, if unspecified will
@@ -334,6 +335,19 @@ nma <- function(network,
 
     for (spec in connect_baseline) {
       if (spec$type == "fixed") {
+        # Check that studies belong to a single data type
+        in_ipd <- has_ipd(network) && spec$studies %in% as.character(network$ipd$.study)
+        in_agd_arm <- has_agd_arm(network) && spec$studies %in% as.character(network$agd_arm$.study)
+        in_agd_contrast <- has_agd_contrast(network) && spec$studies %in% as.character(network$agd_contrast$.study)
+
+        data_types <- c()
+        if (any(in_ipd)) data_types <- c(data_types, "ipd")
+        if (any(in_agd_arm) || any(in_agd_contrast)) data_types <- c(data_types, "agd")
+
+        if (length(unique(data_types)) > 1) {
+          abort("Studies within a single `con()` must all be the same type of data (IPD or AgD).")
+        }
+
         if (!is.null(spec$baseline_prior)) {
           warning(
             sprintf(
@@ -342,6 +356,9 @@ nma <- function(network,
             ),
             call. = FALSE
           )
+        }
+        if (any(in_agd_contrast)) {
+          abort("AgD contrast data cannot be used in a fixed baseline connection.")
         }
         network <- apply_connect_fixed(network, spec$studies)
       } else {
