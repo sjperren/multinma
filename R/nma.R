@@ -3749,10 +3749,12 @@ apply_connect_fixed <- function(network, studies) {
   if (has_ipd(network)) {
     network$ipd$.study <-
       forcats::fct_collapse(network$ipd$.study, !!new_name := studies)
-  } if (has_agd_arm(network)) {
+  }
+  if (has_agd_arm(network)) {
     network$agd_arm$.study <-
       forcats::fct_collapse(network$agd_arm$.study, !!new_name := studies)
-  } if (has_agd_contrast(network)) {
+  }
+  if (has_agd_contrast(network)) {
     network$agd_contrast$.study <-
       forcats::fct_collapse(network$agd_contrast$.study, !!new_name := studies)
   }
