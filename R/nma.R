@@ -405,9 +405,17 @@ nma <- function(network,
     }
   }
 
-
-
-
+  # Apply fixed baseline connections
+  if (!is.null(connect_baseline)) {
+    for (spec in connect_baseline) {
+      if (spec$type == "fixed") {
+        network <- apply_connect_fixed(network, spec$studies)
+      } else {
+        abort("`connect_baseline` type 'random' not yet implemented.")
+      }
+    }
+    connect_baseline <- NULL
+  }
 
   # Check class_sd
   if (is.list(class_sd)) {
@@ -3730,4 +3738,35 @@ con <- function(type = c("fixed", "random"),
          baseline_prior  = baseline_prior),
     class = "nma_connect"
   )
+}
+
+
+#' Apply fixed baseline connections
+#'
+#' Collapse studies so that they share a common baseline under a fixed
+#' connection. All studies must originate from the same data source. AgD
+#' contrast data cannot be used in a fixed connection.
+#'
+#' @param network An `nma_data` object
+#' @param studies Character vector of study names to combine
+#'
+#' @return Modified `nma_data` object
+#' @noRd
+apply_connect_fixed <- function(network, studies) {
+  new_name <- paste(studies, collapse = " & ")
+
+  if (has_ipd(network) && all(studies %in% network$ipd$.study)) {
+    network$ipd$.study <-
+      forcats::fct_collapse(network$ipd$.study, !!new_name := studies)
+  } else if (has_agd_arm(network) && all(studies %in% network$agd_arm$.study)) {
+    network$agd_arm$.study <-
+      forcats::fct_collapse(network$agd_arm$.study, !!new_name := studies)
+  } else if (has_agd_contrast(network) && all(studies %in% network$agd_contrast$.study)) {
+    abort("AgD contrast data cannot be combined with `connect_baseline`." )
+  } else {
+    abort("All studies in a fixed baseline connection must originate from the same data source (IPD or AgD arm-based).")
+  }
+
+  network$studies <- forcats::fct_collapse(network$studies, !!new_name := studies)
+  network
 }
