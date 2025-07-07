@@ -335,18 +335,28 @@ nma <- function(network,
 
     for (spec in connect_baseline) {
       if (spec$type == "fixed") {
-        # Check that studies belong to a single data type
-        in_ipd <- has_ipd(network) && spec$studies %in% as.character(network$ipd$.study)
-        in_agd_arm <- has_agd_arm(network) && spec$studies %in% as.character(network$agd_arm$.study)
-        in_agd_contrast <- has_agd_contrast(network) && spec$studies %in% as.character(network$agd_contrast$.study)
 
-        data_types <- c()
-        if (any(in_ipd)) data_types <- c(data_types, "ipd")
-        if (any(in_agd_arm) || any(in_agd_contrast)) data_types <- c(data_types, "agd")
+      # 1) Abort if *any* study is in the AgD-contrast data
+      if (has_agd_contrast(network) &&
+          any(spec$studies %in% as.character(network$agd_contrast$.study))) {
+        abort(
+          "`connect_baseline()` cannot combine studies from AgD-contrast data; please remove them."
+        )
+      }
 
-        if (length(unique(data_types)) > 1) {
-          abort("Studies within a single `con()` must all be the same type of data (IPD or AgD).")
-        }
+      # 2) Now test pure IPD vs AgD-arm
+      in_ipd <- has_ipd(network) &&
+        all(spec$studies %in% as.character(network$ipd$.study))
+
+      in_agd_arm <- has_agd_arm(network) &&
+        all(spec$studies %in% as.character(network$agd_arm$.study))
+
+      # exactly one of those may be TRUE
+      if (sum(in_ipd, in_agd_arm) != 1L) {
+        abort(
+          "`Studies within each con() in connect_baseline()` must be all IPD or all in AgD-arm, not mixed."
+        )
+      }
 
         if (!is.null(spec$baseline_prior)) {
           warning(
@@ -357,9 +367,7 @@ nma <- function(network,
             call. = FALSE
           )
         }
-        if (any(in_agd_contrast)) {
-          abort("AgD contrast data cannot be used in a fixed baseline connection.")
-        }
+
         network <- apply_connect_fixed(network, spec$studies)
       } else {
         abort("`connect_baseline` type 'random' not yet implemented.")
