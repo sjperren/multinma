@@ -27,7 +27,7 @@
 #' @param connect_baseline Optional baseline connections. Supply one or more
 #'   `con()` specifications to share baselines between studies. Random
 #'   baseline require a `baseline_prior` distribution. All studies listed in a
-#'   single `con()` must originate from the same data type (IPD or AgD).
+#'   single `con()` that are `type = "fixed"` must originate from the same data type (IPD or AgD).
 #' @param likelihood Character string specifying a likelihood, if unspecified
 #'   will be inferred from the data (see details)
 #' @param link Character string specifying a link function, if unspecified will
@@ -370,9 +370,6 @@ nma <- function(network,
 
         network <- apply_connect_fixed(network, spec$studies)
       } else {
-        baseline_groups <- integer()
-        baseline_priors <- list()
-        group_id <- 0
         # Random baseline connection
         if (has_agd_contrast(network) &&
             any(spec$studies %in% as.character(network$agd_contrast$.study))) {
@@ -383,15 +380,7 @@ nma <- function(network,
         if (!all(spec$studies %in% known_studies)) {
           abort("Some studies listed in `connect_baseline()` are not present in the network (IPD or AgD-arm).")
         }
-        check_prior(spec$baseline_prior)
-        group_id <- group_id + 1
-        baseline_groups[spec$studies] <- group_id
-        baseline_priors[[group_id]] <- spec$baseline_prior
-      }
-      if (group_id > 0) {
-        connect_baseline <- list(baseline_group = baseline_groups,
-                                 baseline_prior = baseline_priors)
-        prior_baseline <- group_id
+        which_BP <- which_BP(network$studies, connect_baseline)
       }
     }
   }
@@ -1270,7 +1259,7 @@ if (class_effects == "exchangeable") {
     likelihood = likelihood,
     link = link,
     consistency = consistency,
-    connect_baseline = connect_baseline,
+    which_BP = which_BP,
     ...,
     prior_intercept = prior_intercept,
     prior_trt = prior_trt,
@@ -1481,12 +1470,8 @@ if (class_effects == "exchangeable") {
     class(out) <- c("nma_nodesplit", class(out))
     out$nodesplit <- nodesplit
   }
-
-
-
   return(out)
 }
-
 
 #' @param ipd_x Design matrix for IPD studies
 #' @param ipd_y Outcome data frame for IPD studies
@@ -1518,10 +1503,11 @@ nma.fit <- function(ipd_x, ipd_y,
                     class_effects = c("independent", "exchangeable", "common"),
                     which_CE = NULL,
                     which_CE_sd = NULL,
+                    connect_baseline = c("none", "random", "fixed"),
                     likelihood = NULL,
                     link = NULL,
                     consistency = c("consistency", "ume", "nodesplit"),
-                    connect_baseline = NULL,
+                    which_BP = NULL,
                     ...,
                     prior_intercept,
                     prior_trt,
@@ -1655,6 +1641,11 @@ if (class_effects == "exchangeable") {
 
   # Check priors
   check_prior(prior_intercept)
+  if (!is.null(which_BP)) {
+    for (grp in names(which_BP$prior)) {
+      check_prior(which_BP$prior[[grp]])
+    }
+  }
   if (random_baseline == TRUE){
     check_prior(prior_intercept_sd)
   } else {
@@ -1884,7 +1875,9 @@ if (class_effects == "exchangeable") {
     which_CE_sd = if (class_effects == "exchangeable") which_CE_sd else numeric(0),
     class_effects = ifelse(class_effects == "exchangeable", 1, 0),
     #random baseline effect
-    random_baseline = ifelse(random_baseline == TRUE, 1, 0)
+    random_baseline = ifelse(random_baseline == TRUE, 1, 0),
+    # Selective baseline priors
+    which_BP = if (connect_baseline == "random") which_BP else numeric(0)
     )
 
   # Add priors
