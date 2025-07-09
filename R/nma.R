@@ -340,7 +340,7 @@ nma <- function(network,
       if (has_agd_contrast(network) &&
           any(spec$studies %in% as.character(network$agd_contrast$.study))) {
         abort(
-          "`connect_baseline()` cannot combine studies from AgD-contrast data; please remove them."
+          "`connect_baseline()` cannot combine studies from AgD-contrast data."
         )
       }
 
@@ -370,10 +370,30 @@ nma <- function(network,
 
         network <- apply_connect_fixed(network, spec$studies)
       } else {
-        abort("`connect_baseline` type 'random' not yet implemented.")
+        baseline_groups <- integer()
+        baseline_priors <- list()
+        group_id <- 0
+        # Random baseline connection
+        if (has_agd_contrast(network) &&
+            any(spec$studies %in% as.character(network$agd_contrast$.study))) {
+          abort("`connect_baseline()` cannot include studies from AgD-contrast data; please remove them.")
+        }
+        known_studies <- c(if (has_ipd(network)) as.character(network$ipd$.study) else NULL,
+                           if (has_agd_arm(network)) as.character(network$agd_arm$.study) else NULL)
+        if (!all(spec$studies %in% known_studies)) {
+          abort("Some studies listed in `connect_baseline()` are not present in the network (IPD or AgD-arm).")
+        }
+        check_prior(spec$baseline_prior)
+        group_id <- group_id + 1
+        baseline_groups[spec$studies] <- group_id
+        baseline_priors[[group_id]] <- spec$baseline_prior
+      }
+      if (group_id > 0) {
+        connect_baseline <- list(baseline_group = baseline_groups,
+                                 baseline_prior = baseline_priors)
+        prior_baseline <- group_id
       }
     }
-    connect_baseline <- NULL
   }
 
   # Check network
@@ -3786,4 +3806,53 @@ apply_connect_fixed <- function(network, studies) {
 
   network$studies <- forcats::fct_collapse(network$studies, !!new_name := studies)
   network
+}
+
+#' Create baseline_prior design vector from connect_baseline specs
+#'
+#' @param all_studies  Character vector of all treatment names, in the order you use in your design matrix.
+#' @param connect_baseline  A list of `nma_connect` objects of type = "random"
+#' @return A list with
+#'   - `id`: integer vector (length = length(treatments)), values in 0, 1, 2, …, G
+#'   - `label`: a list of the G prior objects, where id == g refers to label[[g]]
+#' @noRd
+which_BP <- function(all_studies, connect_baseline) {
+  # all_studies: character vector of every study in the network
+  # connect_baseline: list of con(type="random", studies = ..., baseline_prior = ...) specs
+
+  G <- length(connect_baseline)
+  # prepare outputs
+  id    <- integer(length(all_studies))
+  label <- rep(NA_character_, length(all_studies))
+  priors <- vector("list", G)
+
+  # build a vector of group names, e.g. "FIXTURE & ERASURE"
+  group_names <- vapply(connect_baseline,
+                        function(spec) paste(spec$studies, collapse = " & "),
+                        character(1))
+  names(priors) <- group_names
+
+  # assign each group
+  for (g in seq_len(G)) {
+    spec <- connect_baseline[[g]]
+    priors[[g]] <- spec$baseline_prior
+
+    for (st in spec$studies) {
+      idx <- match(st, all_studies, nomatch = NA_integer_)
+      if (is.na(idx)) {
+        stop(sprintf("Study '%s' not found in all_studies.", st))
+      }
+      id[idx]    <- g
+      label[idx] <- group_names[g]
+    }
+  }
+
+  # turn label into a factor with levels in the order of group_names
+  label <- factor(label, levels = group_names)
+
+  list(
+    id    = id,
+    label = label,
+    prior = priors
+  )
 }
