@@ -1503,7 +1503,6 @@ nma.fit <- function(ipd_x, ipd_y,
                     class_effects = c("independent", "exchangeable", "common"),
                     which_CE = NULL,
                     which_CE_sd = NULL,
-                    connect_baseline = c("none", "random", "fixed"),
                     likelihood = NULL,
                     link = NULL,
                     consistency = c("consistency", "ume", "nodesplit"),
@@ -1877,8 +1876,26 @@ if (class_effects == "exchangeable") {
     #random baseline effect
     random_baseline = ifelse(random_baseline == TRUE, 1, 0),
     # Selective baseline priors
-    which_BP = if (connect_baseline == "random") which_BP else numeric(0)
+    which_BP = if (!is.null(which_BP)) which_BP$id else numeric(0)
     )
+
+  # Build a named list of prior_standat(...) calls for each baseline prior
+  baseline_args <- if (
+    !is.null(which_BP) &&
+    length(which_BP$prior) > 0
+  ) {
+    purrr::imap(which_BP$prior, function(pr, nm) {
+      # nm is something like "FIXTURE & ERASURE"
+      clean_nm <- make.names(nm)       # e.g. "FIXTURE..ERASURE"
+      prior_standat(
+        pr,
+        paste0("prior_baseline_", clean_nm),
+        valid = c("Normal", "Cauchy", "Student t", "flat (implicit)")
+      )
+    }) %>% purrr::flatten() # flatten list-of-lists into one named list
+  } else {
+    list()
+  }
 
   # Add priors
   standat <- purrr::list_modify(standat,
@@ -1905,6 +1922,7 @@ if (class_effects == "exchangeable") {
                                 "Cauchy",  "half-Cauchy",
                                 "Student t", "half-Student t", "log-Student t",
                                 "Exponential", "flat (implicit)")),
+    !!! baseline_args,
     prior_het_type = switch(prior_het_type,
                             sd = 1, var = 2, prec = 3)
     )

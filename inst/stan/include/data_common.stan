@@ -61,6 +61,13 @@ real prior_intercept_location;
 real<lower=0> prior_intercept_scale;
 real<lower=0> prior_intercept_df;
 
+// Optional study-specific intercept priors when connect_baseline = 1
+int<lower=0, upper=1> connect_baseline;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 0] int<lower=0,upper=3> prior_intercept_dist_vec;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 0] real prior_intercept_location_vec;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 0] real<lower=0> prior_intercept_scale_vec;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 0] real<lower=0> prior_intercept_df_vec;
+
 int<lower=0,upper=6> prior_intercept_sd_dist;
 real prior_intercept_sd_location;
 real<lower=0> prior_intercept_sd_scale;
