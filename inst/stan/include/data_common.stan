@@ -106,5 +106,3 @@ real<lower=0> prior_class_sd_df;
 
 // Flag to indicate whether a random baseline is used (1 = random, 0 = fixed)
 int<lower=0, upper=1> random_baseline;
-
-

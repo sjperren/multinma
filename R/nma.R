@@ -380,7 +380,7 @@ nma <- function(network,
         if (!all(spec$studies %in% known_studies)) {
           abort("Some studies listed in `connect_baseline()` are not present in the network (IPD or AgD-arm).")
         }
-        which_BP <- which_BP(network$studies, connect_baseline)
+        which_BP <- which_BP(network$studies, connect_baseline, prior_intercept)
       }
     }
   }
@@ -1876,7 +1876,8 @@ if (class_effects == "exchangeable") {
     #random baseline effect
     random_baseline = ifelse(random_baseline == TRUE, 1, 0),
     # Selective baseline priors
-    which_BP = if (!is.null(which_BP)) which_BP$id else numeric(0)
+    which_BP = if (!is.null(which_BP)) which_BP$id else numeric(0),
+    connect_baseline = ifelse (!is.null(which_BP), 1, 0)
     )
 
   # Build a named list of prior_standat(...) calls for each baseline prior
@@ -3823,43 +3824,57 @@ apply_connect_fixed <- function(network, studies) {
 #'
 #' @param all_studies  Character vector of all treatment names, in the order you use in your design matrix.
 #' @param connect_baseline  A list of `nma_connect` objects of type = "random"
+#' @param prior_intercept  A `nma_prior` object for the intercept.
 #' @return A list with
 #'   - `id`: integer vector (length = length(treatments)), values in 0, 1, 2, …, G
 #'   - `label`: a list of the G prior objects, where id == g refers to label[[g]]
+#'   - `prior`: a list of prior objects, where id == g refers to prior[[g]]
 #' @noRd
-which_BP <- function(all_studies, connect_baseline) {
-  # all_studies: character vector of every study in the network
-  # connect_baseline: list of con(type="random", studies = ..., baseline_prior = ...) specs
-
+which_BP <- function(all_studies,
+                     connect_baseline,
+                     prior_intercept) {
+  # Number of sharing‐groups:
   G <- length(connect_baseline)
-  # prepare outputs
-  id    <- integer(length(all_studies))
-  label <- rep(NA_character_, length(all_studies))
-  priors <- vector("list", G)
 
-  # build a vector of group names, e.g. "FIXTURE & ERASURE"
+  # 1) Build the names for each group, e.g. "FIXTURE & ERASURE"
   group_names <- vapply(connect_baseline,
-                        function(spec) paste(spec$studies, collapse = " & "),
+                        function(spec)
+                          paste(spec$studies, collapse = " & "),
                         character(1))
-  names(priors) <- group_names
 
-  # assign each group
+  # 2) Build the combined list of priors: first the intercept, then each group's baseline_prior
+  priors <- c(
+    list(prior_intercept),
+    lapply(connect_baseline, `[[`, "baseline_prior")
+  )
+  names(priors) <- c("intercept", group_names)
+
+  # 3) Start your id and label vectors
+  #    id_tmp = 0 for intercept, 1…G for each group
+  id_tmp    <- integer(length(all_studies))
+  label_tmp <- rep("intercept", length(all_studies))
+
+  # 4) Fill in group slots
   for (g in seq_len(G)) {
     spec <- connect_baseline[[g]]
-    priors[[g]] <- spec$baseline_prior
-
     for (st in spec$studies) {
-      idx <- match(st, all_studies, nomatch = NA_integer_)
-      if (is.na(idx)) {
-        stop(sprintf("Study '%s' not found in all_studies.", st))
+      i <- match(st, all_studies, nomatch = 0)
+      if (i == 0L) {
+        stop("Study '", st, "' not found in all_studies.")
       }
-      id[idx]    <- g
-      label[idx] <- group_names[g]
+      id_tmp[i]    <- g
+      label_tmp[i] <- group_names[g]
     }
   }
 
-  # turn label into a factor with levels in the order of group_names
-  label <- factor(label, levels = group_names)
+  # 5) Shift id so that:
+  #      id == 0 → 1  (intercept)
+  #      id == 1 → 2  (first baseline group)
+  #      …
+  id <- ifelse(id_tmp == 0L, 1L, id_tmp + 1L)
+
+  # 6) Make a factor of labels with levels in the same order
+  label <- factor(label_tmp, levels = names(priors))
 
   list(
     id    = id,
