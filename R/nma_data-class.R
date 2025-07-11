@@ -737,7 +737,10 @@ has_indirect <- function(network, trt1, trt2) {
 #' @param nudge Numeric value to nudge the treatment labels away from the nodes
 #'   when `weight_nodes = TRUE`. Default is `0` (no adjustment to label
 #'   position). A small value like `0.1` is usually sufficient.
-#'
+#'' @param show_single_arm Display single-arm studies as points on the treatment
+#'   nodes? Default is `FALSE`. When `TRUE`, each treatment with single-arm
+#'   studies is marked by a point with the legend listing the corresponding
+#'   study names.
 #' @details The default is equivalent to `layout = "linear"` and `circular =
 #'   TRUE`, which places the treatment nodes on a circle in the order defined by
 #'   the treatment factor variable. An alternative layout which may give good
@@ -795,7 +798,8 @@ plot.nma_data <- function(x, ..., layout, circular,
                           weight_nodes = FALSE,
                           show_trt_class = FALSE,
                           level = c("treatment", "class"),
-                          nudge = 0) {
+                          nudge = 0,
+                          show_single_arm = FALSE) {
   level <- rlang::arg_match(level)
   if (missing(layout) && missing(circular)) {
     layout <- "linear"
@@ -818,6 +822,9 @@ plot.nma_data <- function(x, ..., layout, circular,
 
   if (!rlang::is_bool(show_trt_class))
     abort("`show_trt_class` must be TRUE or FALSE.")
+
+  if (!rlang::is_bool(show_single_arm))
+    abort("`show_single_arm` must be TRUE or FALSE.")
 
   if (show_trt_class && is.null(x$classes))
     abort(paste("Treatment classes not specified in network.",
@@ -843,6 +850,19 @@ plot.nma_data <- function(x, ..., layout, circular,
     }
     x$classes <- forcats::fct_unique(x$classes)
     x$treatments <- x$classes
+  }
+
+  sa_nodes <- NULL
+  if (show_single_arm) {
+    g_full <- igraph::as.igraph(x, collapse = FALSE)
+    e_full <- igraph::as_data_frame(g_full, what = "edges")
+    sa_edges <- e_full[e_full$from == e_full$to, c("from", ".study")]
+    if (nrow(sa_edges) > 0) {
+      sa_nodes <- sa_edges %>%
+        dplyr::group_by(from) %>%
+        dplyr::summarise(study = paste(.study, collapse = ", "), .groups = "drop") %>%
+        dplyr::rename(name = from)
+    }
   }
 
   dat_mixed <- has_ipd(x) && (has_agd_arm(x) || has_agd_contrast(x))
@@ -877,6 +897,15 @@ plot.nma_data <- function(x, ..., layout, circular,
                                 shape = 21)
     }
 
+    if (!is.null(sa_nodes)) {
+      sa_tmp <- dplyr::left_join(sa_nodes, g$data[, c("name", "x", "y")],
+                                 by = "name")
+      g <- g +
+        ggplot2::geom_point(data = sa_tmp,
+                            ggplot2::aes(x = x, y = y, shape = name),
+                            size = 2, colour = "black")
+    }
+
     # Calculate nudge positions
     if (nudge == 0) {
       pos <- ggplot2::position_identity()
@@ -908,8 +937,26 @@ plot.nma_data <- function(x, ..., layout, circular,
     }
   }
 
+  if (!is.null(sa_nodes)) {
+    sa_tmp <- dplyr::left_join(sa_nodes, g$data[, c("name", "x", "y")],
+                               by = "name")
+    g <- g +
+      ggplot2::geom_point(data = sa_tmp,
+                          ggplot2::aes(x = x, y = y, shape = name),
+                          size = 2, colour = "black")
+  }
+
   if (show_trt_class) {
     g <- g + ggplot2::scale_fill_discrete("Treatment Class", aesthetics = c("fill", "colour"))
+  }
+
+  if (show_single_arm && !is.null(sa_nodes)) {
+    g <- g +
+      ggplot2::scale_shape_discrete(
+        "Single-arm studies",
+        breaks = sa_nodes$name,
+        labels = sa_nodes$study
+      )
   }
 
   g <- g +
