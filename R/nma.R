@@ -1906,7 +1906,7 @@ if (class_effects == "exchangeable") {
                                 "Student t", "half-Student t", "log-Student t",
                                 "Exponential", "flat (implicit)")),
     prior_het_type = switch(prior_het_type,
-                            sd = 1, var = 2, prec = 3)
+                            sd = 1, var = 2, prec = 3),
     !!! prior_standat(which_BP, "prior_baseline",
                       valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
     )
