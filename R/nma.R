@@ -1880,24 +1880,6 @@ if (class_effects == "exchangeable") {
     connect_baseline = ifelse (!is.null(which_BP), 1, 0)
     )
 
-  # Build a named list of prior_standat(...) calls for each baseline prior
-  baseline_args <- if (
-    !is.null(which_BP) &&
-    length(which_BP$prior) > 0
-  ) {
-    purrr::imap(which_BP$prior, function(pr, nm) {
-      # nm is something like "FIXTURE & ERASURE"
-      clean_nm <- make.names(nm)       # e.g. "FIXTURE..ERASURE"
-      prior_standat(
-        pr,
-        paste0("prior_baseline_", clean_nm),
-        valid = c("Normal", "Cauchy", "Student t", "flat (implicit)")
-      )
-    }) %>% purrr::flatten() # flatten list-of-lists into one named list
-  } else {
-    list()
-  }
-
   # Add priors
   standat <- purrr::list_modify(standat,
     !!! prior_standat(prior_intercept, "prior_intercept",
@@ -1923,9 +1905,8 @@ if (class_effects == "exchangeable") {
                                 "Cauchy",  "half-Cauchy",
                                 "Student t", "half-Student t", "log-Student t",
                                 "Exponential", "flat (implicit)")),
-    !!! baseline_args,
-    prior_het_type = switch(prior_het_type,
-                            sd = 1, var = 2, prec = 3)
+    !!! prior_standat(which_BP, "prior_baseline",
+                      valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
     )
 
   # Check if running baseline synthesis
@@ -3534,6 +3515,12 @@ check_prior <- function(x, list_names) {
 #'
 #' @noRd
 prior_standat <- function(x, par, valid){
+  UseMethod("prior_standat")
+}
+
+#’ Default method: a single nma_prior
+#’ @noRd
+prior_standat.nma_prior <- function(x, par, valid) {
   if (!inherits(x, "nma_prior")) abort("Not a `nma_prior` object.")
 
   dist <- x$dist
@@ -3558,6 +3545,60 @@ prior_standat <- function(x, par, valid){
   out[is.na(out)] <- 0
   names(out) <- paste0(par, "_", names(out))
   return(out)
+}
+
+#’ Vectorised method: a which_BP object of class "nma_prior_baseline"
+#’ @noRd
+prior_standat.nma_prior_baseline <- function(x, par, valid) {
+  ids <- x$id
+  prs <- x$prior
+
+  # 1) Map & validate dist → integer code
+  dist_codes <- vapply(prs, function(pr) {
+    d <- pr$dist
+    if (!d %in% valid)
+      abort(glue::glue("Invalid baseline prior. Suitable distributions are: ",
+                       glue::glue_collapse(valid, ", ", last = ", or ")))
+    switch(d,
+           `flat (implicit)` = 0,
+           Normal = , `half-Normal` = 1,
+           Cauchy = , `half-Cauchy` = 2,
+           `Student t` = , `half-Student t` = 3,
+           Exponential = 4,
+           `log-Normal` = 5,
+           `log-Student t` = 6,
+           Gamma = 7)
+  }, numeric(1))
+
+  # 2) Extract the other slots
+  locs   <- vapply(prs, `[[`, numeric(1), "location")
+  scales <- vapply(prs, `[[`, numeric(1), "scale")
+  dfs    <- vapply(prs, `[[`, numeric(1), "df")
+
+  # 3) Re-index by your design‐matrix ids
+  prior_intercept_dist_vec     <- dist_codes[ids]
+  prior_intercept_location_vec <- locs  [ids]
+  prior_intercept_scale_vec    <- scales[ids]
+  prior_intercept_df_vec       <- dfs   [ids]
+
+  # 4) Zero‐out any NAs (so Stan’s signature checks pass)
+  prior_intercept_dist_vec    [is.na(prior_intercept_dist_vec)]    <- 0
+  prior_intercept_location_vec[is.na(prior_intercept_location_vec)]<- 0
+  prior_intercept_scale_vec   [is.na(prior_intercept_scale_vec)]   <- 0
+  prior_intercept_df_vec      [is.na(prior_intercept_df_vec)]      <- 0
+
+  # 5) **Strip ALL names** before returning
+  prior_intercept_dist_vec      <- unname(prior_intercept_dist_vec)
+  prior_intercept_location_vec  <- unname(prior_intercept_location_vec)
+  prior_intercept_scale_vec     <- unname(prior_intercept_scale_vec)
+  prior_intercept_df_vec        <- unname(prior_intercept_df_vec)
+
+  list(
+    prior_intercept_dist_vec     = prior_intercept_dist_vec,
+    prior_intercept_location_vec = prior_intercept_location_vec,
+    prior_intercept_scale_vec    = prior_intercept_scale_vec,
+    prior_intercept_df_vec       = prior_intercept_df_vec
+  )
 }
 
 #' Get covariance structure contrast-based data, using se on baseline arm
@@ -3876,9 +3917,13 @@ which_BP <- function(all_studies,
   # 6) Make a factor of labels with levels in the same order
   label <- factor(label_tmp, levels = names(priors))
 
-  list(
+  out <- list(
     id    = id,
     label = label,
     prior = priors
   )
+
+  class(out) <- c("nma_prior_baseline", class(out))
+
+  out
 }

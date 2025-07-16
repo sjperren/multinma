@@ -101,5 +101,5 @@ if (class_effects) {
   }
 }
 
-// Multiple baseline_priors for use when using random baseline effects (step 2)
+// Multiple baseline_priors for use when use in step 2 of baseline synethesis
 array[connect_baseline ? ns_ipd + ns_agd_arm : 0] int<lower=0> which_BP; // Vector to mapping baseline priors to studies
