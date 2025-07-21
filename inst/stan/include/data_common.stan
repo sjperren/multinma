@@ -56,17 +56,13 @@ corr_matrix[RE ? max(which_RE) : 1] RE_cor; // RE correlation matrix
 int<lower=0, upper=1> nodesplit; // Node-splitting flag (yes = 1)
 
 // -- Priors --
-int<lower=0,upper=3> prior_intercept_dist;
-real prior_intercept_location;
-real<lower=0> prior_intercept_scale;
-real<lower=0> prior_intercept_df;
-
-// Optional study-specific intercept priors when connect_baseline = 1
+// Prior for study intercepts
+// Scalar when connect_baseline = 0, study-specific vector otherwise
 int<lower=0, upper=1> connect_baseline;
-array[connect_baseline ? ns_ipd + ns_agd_arm : 0] int<lower=0,upper=3> prior_intercept_dist_vec;
-array[connect_baseline ? ns_ipd + ns_agd_arm : 0] real prior_intercept_location_vec;
-array[connect_baseline ? ns_ipd + ns_agd_arm : 0] real<lower=0> prior_intercept_scale_vec;
-array[connect_baseline ? ns_ipd + ns_agd_arm : 0] real<lower=0> prior_intercept_df_vec;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] int<lower=0,upper=3> prior_intercept_dist;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] real prior_intercept_location;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] real<lower=0> prior_intercept_scale;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] real<lower=0> prior_intercept_df;
 
 int<lower=0,upper=6> prior_intercept_sd_dist;
 real prior_intercept_sd_location;

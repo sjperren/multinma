@@ -380,7 +380,7 @@ nma <- function(network,
         if (!all(spec$studies %in% known_studies)) {
           abort("Some studies listed in `connect_baseline()` are not present in the network (IPD or AgD-arm).")
         }
-        which_BP <- which_BP(network$studies, connect_baseline, prior_intercept)
+        which_baseline <- which_BP(network$studies, connect_baseline, prior_intercept)
       }
     }
   }
@@ -1259,7 +1259,7 @@ if (class_effects == "exchangeable") {
     likelihood = likelihood,
     link = link,
     consistency = consistency,
-    which_BP = which_BP,
+    which_baseline = which_baseline,
     ...,
     prior_intercept = prior_intercept,
     prior_trt = prior_trt,
@@ -1506,7 +1506,7 @@ nma.fit <- function(ipd_x, ipd_y,
                     likelihood = NULL,
                     link = NULL,
                     consistency = c("consistency", "ume", "nodesplit"),
-                    which_BP = NULL,
+                    which_baseline = NULL,
                     ...,
                     prior_intercept,
                     prior_trt,
@@ -1640,9 +1640,9 @@ if (class_effects == "exchangeable") {
 
   # Check priors
   check_prior(prior_intercept)
-  if (!is.null(which_BP)) {
-    for (grp in names(which_BP$prior)) {
-      check_prior(which_BP$prior[[grp]])
+  if (!is.null(which_baseline)) {
+    for (grp in names(which_baseline$prior)) {
+      check_prior(which_baseline$prior[[grp]])
     }
   }
   if (random_baseline == TRUE){
@@ -1874,16 +1874,11 @@ if (class_effects == "exchangeable") {
     which_CE_sd = if (class_effects == "exchangeable") which_CE_sd else numeric(0),
     class_effects = ifelse(class_effects == "exchangeable", 1, 0),
     #random baseline effect
-    random_baseline = ifelse(random_baseline == TRUE, 1, 0),
-    # Selective baseline priors
-    which_BP = if (!is.null(which_BP)) which_BP$id else numeric(0),
-    connect_baseline = ifelse (!is.null(which_BP), 1, 0)
+    random_baseline = ifelse(random_baseline == TRUE, 1, 0)
     )
 
   # Add priors
   standat <- purrr::list_modify(standat,
-    !!! prior_standat(prior_intercept, "prior_intercept",
-                      valid = c("Normal", "Cauchy", "Student t", "flat (implicit)")),
     !!! prior_standat(prior_intercept_sd, "prior_intercept_sd",
                       valid = c("Normal", "half-Normal", "log-Normal",
                                 "Cauchy",  "half-Cauchy",
@@ -1906,10 +1901,20 @@ if (class_effects == "exchangeable") {
                                 "Student t", "half-Student t", "log-Student t",
                                 "Exponential", "flat (implicit)")),
     prior_het_type = switch(prior_het_type,
-                            sd = 1, var = 2, prec = 3),
-    !!! prior_standat(which_BP, "prior_baseline",
-                      valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
+                            sd = 1, var = 2, prec = 3)
     )
+
+  # Build study-specific intercept priors
+  if (!is.null(which_baseline)) {
+    pi_list <- prior_standat(which_baseline, "prior_baseline",
+                             valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
+    cb_flag <- 1L
+  } else {
+    pi_list <- prior_standat(prior_intercept, "prior_intercept",
+                             valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
+    cb_flag <- 0L
+  }
+  standat <- c(standat, pi_list, list(connect_baseline = cb_flag))
 
   # Check if running baseline synthesis
   if (!is.null(random_baseline) && random_baseline == TRUE) {
@@ -3549,7 +3554,7 @@ prior_standat.nma_prior <- function(x, par, valid) {
   return(out)
 }
 
-#’ Vectorised method: a which_BP object of class "nma_prior_baseline"
+#’ Vectorised method: a which_baseline object of class "nma_prior_baseline"
 #’ @noRd
 prior_standat.nma_prior_baseline <- function(x, par, valid) {
   ids <- x$id
@@ -3578,28 +3583,28 @@ prior_standat.nma_prior_baseline <- function(x, par, valid) {
   dfs    <- vapply(prs, `[[`, numeric(1), "df")
 
   # 3) Re-index by your design‐matrix ids
-  prior_intercept_dist_vec     <- dist_codes[ids]
-  prior_intercept_location_vec <- locs  [ids]
-  prior_intercept_scale_vec    <- scales[ids]
-  prior_intercept_df_vec       <- dfs   [ids]
+  prior_intercept_dist     <- dist_codes[ids]
+  prior_intercept_location <- locs  [ids]
+  prior_intercept_scale    <- scales[ids]
+  prior_intercept_df       <- dfs   [ids]
 
   # 4) Zero‐out any NAs (so Stan’s signature checks pass)
-  prior_intercept_dist_vec    [is.na(prior_intercept_dist_vec)]    <- 0
-  prior_intercept_location_vec[is.na(prior_intercept_location_vec)]<- 0
-  prior_intercept_scale_vec   [is.na(prior_intercept_scale_vec)]   <- 0
-  prior_intercept_df_vec      [is.na(prior_intercept_df_vec)]      <- 0
+  prior_intercept_dist    [is.na(prior_intercept_dist)]    <- 0
+  prior_intercept_location[is.na(prior_intercept_location)]<- 0
+  prior_intercept_scale   [is.na(prior_intercept_scale)]   <- 0
+  prior_intercept_df      [is.na(prior_intercept_df)]      <- 0
 
   # 5) **Strip ALL names** before returning
-  prior_intercept_dist_vec      <- unname(prior_intercept_dist_vec)
-  prior_intercept_location_vec  <- unname(prior_intercept_location_vec)
-  prior_intercept_scale_vec     <- unname(prior_intercept_scale_vec)
-  prior_intercept_df_vec        <- unname(prior_intercept_df_vec)
+  prior_intercept_dist      <- unname(prior_intercept_dist)
+  prior_intercept_location  <- unname(prior_intercept_location)
+  prior_intercept_scale     <- unname(prior_intercept_scale)
+  prior_intercept_df        <- unname(prior_intercept_df)
 
   list(
-    prior_intercept_dist_vec     = prior_intercept_dist_vec,
-    prior_intercept_location_vec = prior_intercept_location_vec,
-    prior_intercept_scale_vec    = prior_intercept_scale_vec,
-    prior_intercept_df_vec       = prior_intercept_df_vec
+    prior_intercept_dist     = prior_intercept_dist,
+    prior_intercept_location = prior_intercept_location,
+    prior_intercept_scale    = prior_intercept_scale,
+    prior_intercept_df       = prior_intercept_df
   )
 }
 
