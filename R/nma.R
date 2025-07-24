@@ -321,6 +321,9 @@ nma <- function(network,
     prior_intercept_sd <- NULL
   }
 
+  # Default baseline connections
+  which_baseline <- NULL
+
   # Check and apply connect_baseline specifications
   if (!is.null(connect_baseline)) {
     # Turn single con(...) into a list
