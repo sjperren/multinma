@@ -3554,6 +3554,8 @@ prior_standat.nma_prior <- function(x, par, valid) {
   # need to pass rstan checks
   out[is.na(out)] <- 0
   names(out) <- paste0(par, "_", names(out))
+  if (par == "prior_intercept")
+    out <- lapply(out, function(z) array(z, dim = 1L))
   return(out)
 }
 
