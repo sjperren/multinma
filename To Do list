@@ -1,0 +1,3 @@
+- Implement Separate Single-Arm Nodes: Create distinct nodes for single-arm studies, positioned beneath treatment labels, in a lighter shade, and sized by total single-arm sample size.
+
+- Energy distance implementation: Ensure code is correct and test this package on known populations, with some background reading into the package.
