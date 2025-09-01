@@ -321,13 +321,16 @@ nma <- function(network,
     prior_intercept_sd <- NULL
   }
 
+  # Default baseline connections
+  which_baseline <- NULL
+
   # Check and apply connect_baseline specifications
   if (!is.null(connect_baseline)) {
     # Turn single con(...) into a list
     if (inherits(connect_baseline, "nma_connect"))
       connect_baseline <- list(connect_baseline)
 
-    # Check it's a list of valid specs
+    # Check it’s a list of valid specs
     if (!is.list(connect_baseline) ||
         !all(vapply(connect_baseline, inherits, logical(1), "nma_connect"))) {
       abort("`connect_baseline` must be a con(...) or list of con(...)")
@@ -380,19 +383,8 @@ nma <- function(network,
         if (!all(spec$studies %in% known_studies)) {
           abort("Some studies listed in `connect_baseline()` are not present in the network (IPD or AgD-arm).")
         }
+        which_baseline <- which_BP(network$studies, connect_baseline, prior_intercept)
       }
-    }
-
-    connect_baseline <- purrr::keep(connect_baseline, ~ .x$type == "random")
-    if (length(connect_baseline) == 0) {
-      connect_baseline <- NULL
-    } else {
-      study_levels <- c(if (has_ipd(network)) levels(network$ipd$.study) else character(),
-                        if (has_agd_arm(network)) levels(network$agd_arm$.study) else character())
-      connect_baseline <- lapply(connect_baseline, function(spec) {
-        spec$studies <- match(spec$studies, study_levels)
-        spec
-      })
     }
   }
 
@@ -1270,7 +1262,7 @@ if (class_effects == "exchangeable") {
     likelihood = likelihood,
     link = link,
     consistency = consistency,
-    connect_baseline = connect_baseline,
+    which_baseline = which_baseline,
     ...,
     prior_intercept = prior_intercept,
     prior_trt = prior_trt,
@@ -1517,7 +1509,7 @@ nma.fit <- function(ipd_x, ipd_y,
                     likelihood = NULL,
                     link = NULL,
                     consistency = c("consistency", "ume", "nodesplit"),
-                    connect_baseline = NULL,
+                    which_baseline = NULL,
                     ...,
                     prior_intercept,
                     prior_trt,
@@ -1651,9 +1643,9 @@ if (class_effects == "exchangeable") {
 
   # Check priors
   check_prior(prior_intercept)
-  if (!is.null(connect_baseline)) {
-    for (spec in connect_baseline) {
-      check_prior(spec$baseline_prior)
+  if (!is.null(which_baseline)) {
+    for (grp in names(which_baseline$prior)) {
+      check_prior(which_baseline$prior[[grp]])
     }
   }
   if (random_baseline == TRUE){
@@ -1916,31 +1908,9 @@ if (class_effects == "exchangeable") {
     )
 
   # Build study-specific intercept priors
-  if (!is.null(connect_baseline)) {
-    totns <- length(unique(ipd_study)) + length(unique(agd_arm_study))
-    prior_list <- rep(list(prior_intercept), totns)
-    for (spec in connect_baseline) {
-      prior_list[spec$studies] <- list(spec$baseline_prior)
-    }
-    valid <- c("Normal", "Cauchy", "Student t", "flat (implicit)")
-    dist_codes <- purrr::map_int(prior_list, function(pr) {
-      d <- pr$dist
-      if (!d %in% valid)
-        abort(glue::glue("Invalid baseline prior. Suitable distributions are: ",
-                         glue::glue_collapse(valid, sep = ", ", last = ", or ")))
-      switch(d,
-             `flat (implicit)` = 0,
-             Normal = 1,
-             Cauchy = 2,
-             `Student t` = 3)
-    })
-    locs <- purrr::map_dbl(prior_list, "location", .default = 0)
-    scales <- purrr::map_dbl(prior_list, "scale", .default = 0)
-    dfs <- purrr::map_dbl(prior_list, "df", .default = 0)
-    pi_list <- list(prior_intercept_dist = unname(dist_codes),
-                    prior_intercept_location = unname(locs),
-                    prior_intercept_scale = unname(scales),
-                    prior_intercept_df = unname(dfs))
+  if (!is.null(which_baseline)) {
+    pi_list <- prior_standat(which_baseline, "prior_baseline",
+                             valid = c("Normal", "Cauchy", "Student t", "flat (implicit)"))
     cb_flag <- 1L
   } else {
     pi_list <- prior_standat(prior_intercept, "prior_intercept",
@@ -3589,6 +3559,60 @@ prior_standat.nma_prior <- function(x, par, valid) {
   return(out)
 }
 
+#’ Vectorised method: a which_baseline object of class "nma_prior_baseline"
+#’ @noRd
+prior_standat.nma_prior_baseline <- function(x, par, valid) {
+  ids <- x$id
+  prs <- x$prior
+
+  # 1) Map & validate dist → integer code
+  dist_codes <- vapply(prs, function(pr) {
+    d <- pr$dist
+    if (!d %in% valid)
+      abort(glue::glue("Invalid baseline prior. Suitable distributions are: ",
+                       glue::glue_collapse(valid, ", ", last = ", or ")))
+    switch(d,
+           `flat (implicit)` = 0,
+           Normal = , `half-Normal` = 1,
+           Cauchy = , `half-Cauchy` = 2,
+           `Student t` = , `half-Student t` = 3,
+           Exponential = 4,
+           `log-Normal` = 5,
+           `log-Student t` = 6,
+           Gamma = 7)
+  }, numeric(1))
+
+  # 2) Extract the other slots
+  locs   <- vapply(prs, `[[`, numeric(1), "location")
+  scales <- vapply(prs, `[[`, numeric(1), "scale")
+  dfs    <- vapply(prs, `[[`, numeric(1), "df")
+
+  # 3) Re-index by your design‐matrix ids
+  prior_intercept_dist     <- dist_codes[ids]
+  prior_intercept_location <- locs  [ids]
+  prior_intercept_scale    <- scales[ids]
+  prior_intercept_df       <- dfs   [ids]
+
+  # 4) Zero‐out any NAs (so Stan’s signature checks pass)
+  prior_intercept_dist    [is.na(prior_intercept_dist)]    <- 0
+  prior_intercept_location[is.na(prior_intercept_location)]<- 0
+  prior_intercept_scale   [is.na(prior_intercept_scale)]   <- 0
+  prior_intercept_df      [is.na(prior_intercept_df)]      <- 0
+
+  # 5) **Strip ALL names** before returning
+  prior_intercept_dist      <- unname(prior_intercept_dist)
+  prior_intercept_location  <- unname(prior_intercept_location)
+  prior_intercept_scale     <- unname(prior_intercept_scale)
+  prior_intercept_df        <- unname(prior_intercept_df)
+
+  list(
+    prior_intercept_dist     = prior_intercept_dist,
+    prior_intercept_location = prior_intercept_location,
+    prior_intercept_scale    = prior_intercept_scale,
+    prior_intercept_df       = prior_intercept_df
+  )
+}
+
 #' Get covariance structure contrast-based data, using se on baseline arm
 #'
 #' @param x A data frame of agd_contrast data
@@ -3859,3 +3883,59 @@ apply_connect_fixed <- function(network, studies) {
 #'   - `label`: a list of the G prior objects, where id == g refers to label[[g]]
 #'   - `prior`: a list of prior objects, where id == g refers to prior[[g]]
 #' @noRd
+which_BP <- function(all_studies,
+                     connect_baseline,
+                     prior_intercept) {
+  # Number of sharing‐groups:
+  G <- length(connect_baseline)
+
+  # 1) Build the names for each group, e.g. "FIXTURE & ERASURE"
+  group_names <- vapply(connect_baseline,
+                        function(spec)
+                          paste(spec$studies, collapse = " & "),
+                        character(1))
+
+  # 2) Build the combined list of priors: first the intercept, then each group's baseline_prior
+  priors <- c(
+    list(prior_intercept),
+    lapply(connect_baseline, `[[`, "baseline_prior")
+  )
+  names(priors) <- c("intercept", group_names)
+
+  # 3) Start your id and label vectors
+  #    id_tmp = 0 for intercept, 1…G for each group
+  id_tmp    <- integer(length(all_studies))
+  label_tmp <- rep("intercept", length(all_studies))
+
+  # 4) Fill in group slots
+  for (g in seq_len(G)) {
+    spec <- connect_baseline[[g]]
+    for (st in spec$studies) {
+      i <- match(st, all_studies, nomatch = 0)
+      if (i == 0L) {
+        stop("Study '", st, "' not found in all_studies.")
+      }
+      id_tmp[i]    <- g
+      label_tmp[i] <- group_names[g]
+    }
+  }
+
+  # 5) Shift id so that:
+  #      id == 0 → 1  (intercept)
+  #      id == 1 → 2  (first baseline group)
+  #      …
+  id <- ifelse(id_tmp == 0L, 1L, id_tmp + 1L)
+
+  # 6) Make a factor of labels with levels in the same order
+  label <- factor(label_tmp, levels = names(priors))
+
+  out <- list(
+    id    = id,
+    label = label,
+    prior = priors
+  )
+
+  class(out) <- c("nma_prior_baseline", class(out))
+
+  out
+}
