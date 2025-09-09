@@ -56,10 +56,10 @@ corr_matrix[RE ? max(which_RE) : 1] RE_cor; // RE correlation matrix
 int<lower=0, upper=1> nodesplit; // Node-splitting flag (yes = 1)
 
 // -- Priors --
-int<lower=0,upper=3> prior_intercept_dist;
-real prior_intercept_location;
-real<lower=0> prior_intercept_scale;
-real<lower=0> prior_intercept_df;
+int[random_baseline]<lower=0,upper=3> prior_intercept_dist;
+real[random_baseline] prior_intercept_location;
+real[random_baseline]<lower=0> prior_intercept_scale;
+real[random_baseline]<lower=0> prior_intercept_df;
 
 int<lower=0,upper=6> prior_intercept_sd_dist;
 real prior_intercept_sd_location;
