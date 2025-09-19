@@ -240,7 +240,7 @@ plot.stan_nma <- function(x, ...,
 #'
 #' # Customise plot
 #' plot_prior_posterior(smk_fit_RE, prior = "het",
-#'                      prior_args = list(colour = "darkred", size = 2),
+#'                      prior_args = list(colour = "darkred", linewidth = 2),
 #'                      post_args = list(alpha = 0.6))
 #' }
 #'
