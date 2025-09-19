@@ -94,6 +94,13 @@ test_that("class_effects = 'common' updates network$treatments", {
                info = "network$treatments should be replaced by class factor levels")
 })
 
+#Baseline synthesis tests
+test_that("baseline_synthesis() prior_intercept_sd must be valid", {
+  m_baseline_sd <- "`prior_intercept_sd` must be"
+  expect_error(baseline_synthesis(sa_net, prior_intercept_sd = 1), m_baseline_sd)
+  expect_error(baseline_synthesis(sa_net, prior_intercept_sd = "a"), m_baseline_sd)
+})
+
 # Make dummy covariate data for smoking network
 ns_agd <- max(smoking$studyn)
 smkdummy <-
@@ -290,13 +297,13 @@ test_that("nma.fit() error if only one of x or y provided", {
   y <- tibble(.y = 1:3)
 
   m <- "both be present or both NULL"
-  expect_error(nma.fit(ipd_x = x), m)
-  expect_error(nma.fit(ipd_y = y), m)
-  expect_error(nma.fit(agd_arm_x = x), m)
-  expect_error(nma.fit(agd_arm_y = y), m)
-  expect_error(nma.fit(agd_contrast_x = x), "all be present or all NULL")
-  expect_error(nma.fit(agd_contrast_y = y), "all be present or all NULL")
-  expect_error(nma.fit(agd_contrast_Sigma = list()), "all be present or all NULL")
+  expect_error(nma.fit(ipd_x = x, connect_flag = 0), m)
+  expect_error(nma.fit(ipd_y = y, connect_flag = 0), m)
+  expect_error(nma.fit(agd_arm_x = x, connect_flag = 0), m)
+  expect_error(nma.fit(agd_arm_y = y, connect_flag = 0), m)
+  expect_error(nma.fit(agd_contrast_x = x, connect_flag = 0), "all be present or all NULL")
+  expect_error(nma.fit(agd_contrast_y = y, connect_flag = 0), "all be present or all NULL")
+  expect_error(nma.fit(agd_contrast_Sigma = list(), connect_flag = 0), "all be present or all NULL")
 })
 
 test_that("nma.fit() error if x and y dimension mismatch", {
@@ -306,9 +313,9 @@ test_that("nma.fit() error if x and y dimension mismatch", {
   y <- tibble(.y = 1:2)
 
   m <- "Number of rows.+do not match"
-  expect_error(nma.fit(ipd_x = x, ipd_y = y), m)
-  expect_error(nma.fit(agd_arm_x = x, agd_arm_y = y, n_int = 1), m)
-  expect_error(nma.fit(agd_contrast_x = x, agd_contrast_y = y, agd_contrast_Sigma = list(), n_int = 1), m)
+  expect_error(nma.fit(ipd_x = x, ipd_y = y, connect_flag = 0), m)
+  expect_error(nma.fit(agd_arm_x = x, agd_arm_y = y, n_int = 1, connect_flag = 0), m)
+  expect_error(nma.fit(agd_contrast_x = x, agd_contrast_y = y, agd_contrast_Sigma = list(), n_int = 1, connect_flag = 0), m)
 })
 
 test_that("nma.fit() error if x column names different", {
@@ -324,22 +331,22 @@ test_that("nma.fit() error if x column names different", {
   m <- "Non-matching columns"
   expect_error(nma.fit(ipd_x = x1, ipd_y = y,
                        agd_arm_x = x2, agd_arm_y = y,
-                       n_int = 1), m)
+                       n_int = 1, connect_flag = 0), m)
   expect_error(nma.fit(ipd_x = x1, ipd_y = y,
                        agd_contrast_x = x2, agd_contrast_y = y, agd_contrast_Sigma = Sigma,
-                       n_int = 1), m)
+                       n_int = 1, connect_flag = 0), m)
   expect_error(nma.fit(agd_arm_x = x1, agd_arm_y = y,
                        agd_contrast_x = x2, agd_contrast_y = y, agd_contrast_Sigma = Sigma,
-                       n_int = 1), m)
+                       n_int = 1, connect_flag = 0), m)
   expect_error(nma.fit(ipd_x = x1, ipd_y = y,
                        agd_arm_x = x3, agd_arm_y = y,
-                       n_int = 1), m)
+                       n_int = 1, connect_flag = 0), m)
   expect_error(nma.fit(ipd_x = x1, ipd_y = y,
                        agd_contrast_x = x3, agd_contrast_y = y, agd_contrast_Sigma = Sigma,
-                       n_int = 1), m)
+                       n_int = 1, connect_flag = 0), m)
   expect_error(nma.fit(agd_arm_x = x2, agd_arm_y = y,
                        agd_contrast_x = x3, agd_contrast_y = y, agd_contrast_Sigma = Sigma,
-                       n_int = 1), m)
+                       n_int = 1, connect_flag = 0), m)
 })
 
 test_that("nma.fit() error if agd_contrast_Sigma is not right dimensions", {
@@ -357,6 +364,7 @@ test_that("nma.fit() error if agd_contrast_Sigma is not right dimensions", {
                        prior_trt = normal(0, 10),
                        prior_reg = normal(0, 5),
                        prior_het = normal(0, 1),
+                       connect_flag = 0,
                        n_int = 1), "Dimensions of `agd_contrast_Sigma`.+do not match")
   expect_error(nma.fit(agd_contrast_x = x1, agd_contrast_y = y,
                        agd_contrast_Sigma = Sigma2, likelihood = "normal", link = "identity",
@@ -364,6 +372,7 @@ test_that("nma.fit() error if agd_contrast_Sigma is not right dimensions", {
                        prior_trt = normal(0, 10),
                        prior_reg = normal(0, 5),
                        prior_het = normal(0, 1),
+                       connect_flag = 0,
                        n_int = 1), "Dimensions of `agd_contrast_Sigma`.+do not match")
 })
 
@@ -425,7 +434,7 @@ test_that("nma() gives warnings for default priors", {
   expect_warning(nma(smknet_yi, trt_effects = "random", prior_trt = normal(0, 1), test_grad = TRUE), paste0(m, ".+prior_intercept.+", "prior_het.+", "prior_aux.+"))
   expect_warning(nma(smknet_yi, trt_effects = "random", prior_het = half_normal(1), test_grad = TRUE), paste0(m, ".+prior_intercept.+", "prior_trt.+", "prior_aux.+"))
   expect_warning(nma(smknet_yi, trt_effects = "random", prior_aux = half_normal(1), test_grad = TRUE), paste0(m, ".+prior_intercept.+", "prior_trt.+", "prior_het.+"))
-
+  expect_warning(baseline_synthesis(smknet_yi, trt_effects = "random", test_grad = TRUE), paste0(m, ".+prior_intercept.+", "prior_intercept_sd.+", "prior_trt.+", "prior_het.+", "prior_aux.+"))
 })
 
 test_that("nma() error with incompatible priors", {
@@ -481,4 +490,87 @@ test_that("rstan R-hat and ESS warnings are captured correctly", {
     "The largest R-hat is"),
     "Bulk Effective Sample(s?) Size \\(ESS\\) is too low"),
     "Tail Effective Sample(s?) Size \\(ESS\\) is too low")
+})
+
+pso_ipd <- plaque_psoriasis_ipd %>%
+  mutate(
+    # Variable transformations
+    bsa = bsa / 100,
+    weight = weight / 10,
+    durnpso = durnpso / 10,
+    prevsys = as.numeric(prevsys),
+    psa = as.numeric(psa),
+    # Treatment classes
+    trtclass = case_when(trtn == 1 ~ "Placebo",
+                         trtn %in% c(2, 3, 5, 6) ~ "IL-17 blocker",
+                         trtn == 4 ~ "TNFa blocker",
+                         trtn == 7 ~ "IL-12/23 blocker"),
+    # Check complete cases for covariates of interest
+    is_complete = complete.cases(durnpso, prevsys, bsa, weight, psa)
+  ) %>%
+  arrange(studyc, trtn)
+
+# AgD studies
+pso_agd <- plaque_psoriasis_agd %>%
+  mutate(
+    # Variable transformations
+    bsa_mean = bsa_mean / 100,
+    bsa_sd = bsa_sd / 100,
+    weight_mean = weight_mean / 10,
+    weight_sd = weight_sd / 10,
+    durnpso_mean = durnpso_mean / 10,
+    durnpso_sd = durnpso_sd / 10,
+    prevsys = prevsys / 100,
+    psa = psa / 100,
+    # Treatment classes
+    trtclass = case_when(trtn == 1 ~ "Placebo",
+                         trtn %in% c(2, 3, 5, 6) ~ "IL-17 blocker",
+                         trtn == 4 ~ "TNFa blocker",
+                         trtn == 7 ~ "IL-12/23 blocker")
+  ) %>%
+  arrange(studyc, trtn)
+
+
+# Missing Data
+pso_ipd %>%
+  group_by(studyc) %>%
+  summarise(n_total = n(),
+            n_missing = sum(!is_complete),
+            pct_missing = mean(!is_complete) * 100)
+
+pso_ipd <- filter(pso_ipd, is_complete)
+
+# Creating the FULL network
+pso_net <- combine_network(
+  set_ipd(pso_ipd,
+          study = studyc,
+          trt = trtc,
+          r = multi(r0 = 1,
+                    PASI75 = pasi75,
+                    PASI90 = pasi90,
+                    PASI100 = pasi100,
+                    type = "ordered", inclusive = TRUE),
+          trt_class = trtclass),
+  set_agd_arm(pso_agd,
+              study = studyc,
+              trt = trtc,
+              r = multi(r0 = pasi75_n,
+                        PASI75 = pasi75_r,
+                        PASI90 = pasi90_r,
+                        PASI100 = pasi100_r,
+                        type = "ordered", inclusive = TRUE),
+              trt_class = trtclass)
+)
+
+test_that("con() recieves correct arguments", {
+  expect_error(nma(pso_net, connect_baseline = con(type = "rando", studies = c("FIXTURE", "FEATURE"), baseline_prior = normal(0,10))), "type must equal 'fixed' or 'random'.")
+  expect_error(nma(pso_net, connect_baseline = con(type = 1, studies = c("FIXTURE", "FEATURE"), baseline_prior = normal(0,10))), "type must equal 'fixed' or 'random'.")
+  expect_error(nma(pso_net, connect_baseline = list(con(type = "rando", studies = c("FIXTURE", "FEATURE"), baseline_prior = normal(0,10)), con(type = "random", studies = c("JUNCTURE"), baseline_prior = normal(0,10)))), "type must equal 'fixed' or 'random'.")
+  expect_error(nma(pso_net, connect_baseline = list(con(type = "random", studies = c("FIXTURE", "FEATURE"), baseline_prior = normal(0,10)), con(type = 1, studies = c("JUNCTURE"), baseline_prior = normal(0,10)))), "type must equal 'fixed' or 'random'.")
+  expect_error(nma(pso_net, connect_baseline = list(con(type = "random", studies = c("FIXTURE"), baseline_prior = normal(0,10)), con(type = "fixed", studies = c("FIXTURE", "JUNCTURE")))), "^Each study may appear in at most one con\\(\\)\\. Duplicates found: FIXTURE$")
+  expect_error(nma(pso_net, connect_baseline = con(type = "random", studies = c("FIXTUR", "FEATURE"), baseline_prior = normal(0,10))), "Some studies listed in `connect_baseline()` are not present in the network (IPD or AgD-arm).", fixed = TRUE)
+  expect_error(nma(pso_net, connect_baseline = con(type = "random", studies = c(1, "FEATURE"), baseline_prior = normal(0,10))), "Some studies listed in `connect_baseline()` are not present in the network (IPD or AgD-arm).", fixed = TRUE)
+  expect_error(nma(pso_net, connect_baseline = con(type = "random", studies = c("FIXTURE", "FEATURE"))), "`baseline_prior` must be provided when type = 'random'.")
+  expect_error(nma(pso_net, connect_baseline = con(type = "random", studies = c("FIXTURE", "FEATURE"), baseline_prior = letters),), "`baseline_prior` must be a prior distribution")
+  expect_error(nma(pso_net, connect_baseline = con(type = "random", studies = c("FIXTURE", "FEATURE"), baseline_prior = list(normal(0, 1))),), "`baseline_prior` must be a prior distribution")
 })
