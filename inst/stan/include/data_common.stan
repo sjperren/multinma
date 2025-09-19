@@ -17,9 +17,11 @@ array[narm_agd_arm] int<lower=1> agd_arm_trt;
 array[ni_agd_contrast] int<lower=1> agd_contrast_trt;
 array[ni_agd_contrast] int<lower=1> agd_contrast_trt_b;
 
+// Flag to indicate whether a random baseline is used (1 = random, 0 = fixed)
+int<lower=0, upper=1> random_baseline;
 // Study IDs
-// array[max(ipd_arm)] int<lower=1> ipd_study;
-// array[ni_agd_arm] int<lower=1> agd_arm_study;
+array[random_baseline ? max(ipd_arm) : 0] int<lower=1> ipd_study;
+array[random_baseline ? ni_agd_arm : 0] int<lower=1> agd_arm_study;
 // array[ni_agd_contrast] int<lower=1> agd_contrast_study;
 
 int<lower=1> nt; // number of treatments
@@ -56,10 +58,17 @@ corr_matrix[RE ? max(which_RE) : 1] RE_cor; // RE correlation matrix
 int<lower=0, upper=1> nodesplit; // Node-splitting flag (yes = 1)
 
 // -- Priors --
-int<lower=0,upper=3> prior_intercept_dist;
-real prior_intercept_location;
-real<lower=0> prior_intercept_scale;
-real<lower=0> prior_intercept_df;
+// Scalar when connect_baseline = 0, study-specific vector otherwise
+int<lower=0, upper=1> connect_baseline;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] int<lower=0,upper=3> prior_intercept_dist;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] real prior_intercept_location;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] real<lower=0> prior_intercept_scale;
+array[connect_baseline ? ns_ipd + ns_agd_arm : 1] real<lower=0> prior_intercept_df;
+
+int<lower=0,upper=6> prior_intercept_sd_dist;
+real prior_intercept_sd_location;
+real<lower=0> prior_intercept_sd_scale;
+real<lower=0> prior_intercept_sd_df;
 
 int<lower=0,upper=3> prior_trt_dist;
 real prior_trt_location;

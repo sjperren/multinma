@@ -206,7 +206,8 @@ plot.stan_nma <- function(x, ...,
 #' @param ... Additional arguments passed on to methods
 #' @param prior Character vector selecting the prior and posterior
 #'   distribution(s) to plot. May include `"intercept"`, `"trt"`, `"het"`,
-#'   `"reg"`, `"aux"`, `"class_mean"` or `"class_sd"` as appropriate.
+#'   `"reg"`, `"aux"`, `"class_mean"`, `"class_sd"`, `"baseline_mean"` or
+#'   `"baseline_sd"` as appropriate.
 #' @param post_args List of arguments passed on to [ggplot2::geom_histogram] to
 #'   control plot output for the posterior distribution
 #' @param prior_args List of arguments passed on to [ggplot2::geom_path] to
@@ -290,9 +291,23 @@ plot_prior_posterior <- function(x, ...,
     if (prior[i] %in% c("het", "aux") || (prior[i] == "aux_reg" && x$likelihood %in% c("mspline", "pexp"))) trunc <- c(0, Inf)
     else trunc <- NULL
 
+    if (prior[i] == "intercept" && !inherits(x$priors$prior_intercept, "nma_prior")){
+      unique_priors <- unique(x$priors$prior_intercept)
+      sig <- vapply(x$priors$prior_intercept, function(p) paste(capture.output(dput(p)), collapse = ""), character(1))
+      map_tbl <- tibble::tibble(
+        parameter = paste0("mu[", x$network$studies, "]"),
+        intercept_id = match(sig, unique(sig))
+      )
+
+      #prior_dat[i] <- vector("list", length(unique_priors))
+      for (j in seq_along(unique_priors)) {
+        prior_dat[[i]][[j]] <- get_tidy_prior(unique_priors[[j]], trunc = trunc) %>%
+          tibble::add_column(prior = "intercept")
+      }
+    } else {
     prior_dat[[i]] <- get_tidy_prior(x$priors[[paste0("prior_", prior[i])]], trunc = trunc) %>%
       tibble::add_column(prior = prior[i])
-
+    }
     if (x$likelihood == "gengamma" && prior[i] == "aux") {
       prior_dat[[i]] <-
         dplyr::bind_rows(get_tidy_prior(x$priors$prior_aux$sigma, trunc = trunc),
@@ -300,8 +315,10 @@ plot_prior_posterior <- function(x, ...,
         tibble::add_column(prior = c("aux", "aux2"))
 
     } else {
+      if (!(isTRUE(prior[i] == "intercept") && !inherits(x$priors$prior_intercept, "nma_prior"))){
       prior_dat[[i]] <- get_tidy_prior(x$priors[[paste0("prior_", prior[i])]], trunc = trunc) %>%
         tibble::add_column(prior = prior[i])
+      }
     }
   }
 
@@ -331,7 +348,20 @@ plot_prior_posterior <- function(x, ...,
                                                             lognormal =, loglogistic =, gamma =,
                                                             gengamma = "beta_aux"),
                                            class_mean = "class_mean",
-                                           class_sd = "class_sd"))
+                                           class_sd = "class_sd",
+                                           baseline_mean = "baseline_mean",
+                                           baseline_sd = "baseline_sd"))
+
+  # If baseline_sysnthesis object then show baseline_mean and sd
+  if (inherits(x, "baseline_synthesis")) {
+    prior_dat <- dplyr::bind_rows(
+      prior_dat,
+      get_tidy_prior(x$priors$prior_intercept) %>%
+        tibble::add_column(prior = "intercept", par_base = "baseline_mean"),
+      get_tidy_prior(x$priors$prior_intercept_sd) %>%
+        tibble::add_column(prior = "intercept", par_base = "baseline_sd")
+    )
+  }
 
   # Add in omega parameter if node-splitting model, which uses prior_trt
   if (inherits(x, "nma_nodesplit")) {
@@ -385,6 +415,10 @@ plot_prior_posterior <- function(x, ...,
   draws$par_base <- stringr::str_remove(draws$parameter, "\\[.*\\]")
   draws$parameter <- forcats::fct_inorder(factor(draws$parameter))
 
+  if (exists("map_tbl")) {
+    draws <- dplyr::left_join(draws, map_tbl[, c("parameter", "intercept_id")], by = "parameter")
+  }
+
   # Join prior name into posterior
   draws <- dplyr::left_join(draws, prior_dat[, c("par_base", "prior")], by = "par_base")
 
@@ -430,17 +464,40 @@ plot_prior_posterior <- function(x, ...,
   prior_dat <- tibble::add_column(prior_dat, xseq = xseq, dens = dens)
   prior_dat <- tidyr::unnest(prior_dat, c("xseq", "dens"))
 
+  if (!inherits(x$priors$prior_intercept, "nma_prior")) {
+    prior_dat$intercept_id <- NA_integer_
+    idx <- with(prior_dat, prior == "intercept" & par_base == "mu")
+    prior_dat$intercept_id[idx] <- match(prior_dat$args[idx], unique(prior_dat$args[idx]))
+    }
+
   # Repeat rows of prior_dat for each corresponding parameter
   if (packageVersion("dplyr") >= "1.1.1") {
+    if (exists("map_tbl")) {
     prior_dat <- dplyr::left_join(prior_dat,
-                                  dplyr::distinct(draws, .data$par_base, .data$parameter),
-                                  by = "par_base",
+                                  dplyr::distinct(draws, .data$par_base, .data$parameter, .data$intercept_id),
+                                  by = c("par_base", "intercept_id"),
                                   relationship = "many-to-many")
+    } else {
+      prior_dat <- dplyr::left_join(prior_dat,
+                                    dplyr::distinct(draws, .data$par_base, .data$parameter),
+                                    by = "par_base",
+                                    relationship = "many-to-many")
+    }
   } else {
+    if (exists("map_tbl")) {
     prior_dat <- dplyr::left_join(prior_dat,
-                                  dplyr::distinct(draws, .data$par_base, .data$parameter),
-                                  by = "par_base")
+                                  dplyr::distinct(draws, .data$par_base, .data$parameter, .data$intercept_id),
+                                  by = c("par_base", "intercept_id"))
+    } else {
+      prior_dat <- dplyr::left_join(prior_dat,
+                                    dplyr::distinct(draws, .data$par_base, .data$parameter),
+                                    by = "par_base")
+    }
   }
+
+  # if (!inherits(x$priors$prior_intercept, "nma_prior")) {
+  #  prior_dat <- dplyr::left_join(prior_dat,
+  # }
 
   # Construct plot
   xlim <- c(min(draws$value, 0), max(draws$value))
