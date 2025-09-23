@@ -25,23 +25,23 @@ population_distance <- function(network,
   if (is.null(covariates)) {
     abort("`covariates` argument must be specified and cannot be NULL.")
   }
-  if (!is.character(covariates)) {
-    abort("`covariates` argument must be a character vector of covariate names.")
-  }
   # checking binary variables are within covariates
   if (!is.null(binary) && !all(binary %in% covariates)) {
     abort("All `binary` must also be included in `covariates`.")
   }
   # Check IPD covariates
-  if (nrow(network$ipd) > 0) {
+  if (isTRUE(nrow(network$ipd) > 0)) {
     ipd_covariates <- colnames(network$ipd)
     missing_ipd_covariates <- setdiff(covariates, ipd_covariates)
     if (length(missing_ipd_covariates) > 0) {
-      abort(("The following covariates are missing from the IPD data: {paste(missing_ipd_covariates, collapse=', ')}"))
+      rlang::abort(paste0(
+        "The following covariates are missing from the IPD data: ",
+        paste(missing_ipd_covariates, collapse = ", ")
+      ))
     }
   }
   # Check AGD covariates (exact or with "_mean" suffix)
-  if (nrow(network$agd_arm) > 0) {
+  if (isTRUE(nrow(network$agd_arm)) > 0) {
     # Ensure .sample_size exists
     if (!".sample_size" %in% colnames(network$agd_arm)) {
       abort("Aggregate arm data must contain a '.sample_size' column.")
@@ -50,12 +50,15 @@ population_distance <- function(network,
     agd_covariates <- unique(c(agd_covariates, sub("_mean$", "", agd_covariates)))
     missing_agd_covariates <- setdiff(covariates, agd_covariates)
     if (length(missing_agd_covariates) > 0) {
-      abort(("The following covariates are missing from the AGD data: {paste(missing_agd_covariates, collapse=', ')}"))
+      rlang::abort(paste0(
+        "The following covariates are missing from the AGD arm data: ",
+        paste(missing_agd_covariates, collapse = ", ")
+      ))
     }
   }
 
   # Check AGD contrast covariates (exact or with "_mean" suffix)
-  if (nrow(network$agd_contrast) > 0) {
+  if (isTRUE(nrow(network$agd_contrast) > 0)) {
     # Ensure .sample_size exists
     if (!".sample_size" %in% colnames(network$agd_contrast)) {
       abort("Aggregate contrast data must contain a '.sample_size' column.")
@@ -64,12 +67,16 @@ population_distance <- function(network,
     agd_covariates <- unique(c(agd_covariates, sub("_mean$", "", agd_covariates)))
     missing_agd_covariates <- setdiff(covariates, agd_covariates)
     if (length(missing_agd_covariates) > 0) {
-      abort(("The following covariates are missing from the AGD contrast data: {paste(missing_agd_covariates, collapse=', ')}"))
+      rlang::abort(paste0(
+        "The following covariates are missing from the AGD contrast data: ",
+        paste(missing_agd_covariates, collapse = ", ")
+      ))
     }
+
   }
 
   # Process IPD: Convert logical to numeric and average by study
-  if (method != "energy") {
+  if (method == "alm") {
     if (nrow(network$ipd) > 0) {
     ipd_covariate_data <- network$ipd
     ipd_covariate_data[covariates] <- lapply(ipd_covariate_data[covariates], function(x) {
@@ -132,10 +139,28 @@ population_distance <- function(network,
 
     return(df)
   }
+
   agd_contrast_means <- extract_agd_means(network$agd_contrast, binary)
   agd_arm_means <- extract_agd_means(network$agd_arm, binary)
 
   agd_all <- dplyr::bind_rows(agd_contrast_means, agd_arm_means)
+
+  idx <- which(is.na(agd_all), arr.ind = TRUE)
+  if (nrow(idx)) {
+  rows <- idx[, "row"]
+  cols <- idx[, "col"]
+  studies <- if (".study" %in% names(agd_all)) agd_all$.study[rows] else rownames(agd_all)[rows]
+  vars <- colnames(agd_all)[cols]
+  miss <- unique(data.frame(study = studies, variable = vars, stringsAsFactors = FALSE))
+
+  lines_by_var <- tapply(miss$study, miss$variable, function(s) paste(unique(s), collapse = ", "))
+  stop(paste0(
+    "AgD covariate inputs contain missing values:\n",
+    paste(" • ", names(lines_by_var), " missing in studies: ", unname(lines_by_var), collapse = "\n"),
+    "\nPlease remove these variables from `covariates`"
+  ))
+  }
+
 
   # Weighted summarisation for AGD
   agd_summary <- agd_all %>%
@@ -153,29 +178,134 @@ population_distance <- function(network,
                   sqrt(weighted.mean((!!rlang::sym(paste0(cov, "_sd")))^2, w = .data$.sample_size, na.rm = TRUE))
                 )
               )
-              list(
-                rlang::expr(
-                  weighted.mean(!!rlang::sym(paste0(cov, "_mean")), w = .data$.sample_size, na.rm = TRUE)
-                )
-              )
           }),
           recursive = FALSE
         ),
         # Clean column names
         unlist(
           lapply(covariates, function(cov) {
-            if (scale) {
-              c(paste0(cov, "_mean"), paste0(cov, "_sd"))
-            } else {
-              paste0(cov, "_mean")
-            }
-          })
+            c(paste0(cov, "_mean"), paste0(cov, "_sd"))
+          }
         )
-      ),
-      .groups = "drop"
-    )
+      )
+    ),
+    .groups = "drop"
+  )
+
+  ipd_summary$source <- "IPD"
+  agd_summary$source <- "AGD"
+  all_summary <- dplyr::bind_rows(ipd_summary, agd_summary)
+
+  #Label which subnetwork each study is in
+  g <- igraph::as.igraph(network)
+  components <- igraph::components(g)
+
+  treatment_components <- data.frame(
+    .trt = names(components$membership),
+    subnetwork = components$membership
+  )
+
+  study_trt_lookup <- list(
+    network$ipd,
+    network$agd_contrast,
+    network$agd_arm
+  ) %>%
+    purrr::compact() %>%
+    purrr::map_dfr(~ {
+      cols <- colnames(.x)
+      if (all(c(".study", ".trt") %in% cols)) {
+        dplyr::tibble(
+          .study = as.character(.x$.study),
+          .trt   = as.character(.x$.trt)
+        )
+      } else {
+        NULL
+      }
+    }) %>%
+    dplyr::distinct()
+
+  # Join subnetwork info to each study
+  study_components <- study_trt_lookup %>%
+    dplyr::left_join(treatment_components, by = ".trt") %>%
+    dplyr::select(-.trt) %>%
+    dplyr::distinct(.study, subnetwork)
+
+  all_summary <- dplyr::left_join(all_summary, study_components, by = ".study")
+
+  # Split the data by subnetwork
+  sub1 <- dplyr::filter(all_summary, subnetwork == 1)
+  sub2 <- dplyr::filter(all_summary, subnetwork == 2)
+
+  # Prepare empty matrix to store distances
+  dist_matrix <- matrix(NA,
+                        nrow = nrow(sub1),
+                        ncol = nrow(sub2),
+                        dimnames = list(sub1$.study, sub2$.study))
+
+  dist_matrix_full <- matrix(NA,
+                             nrow = nrow(all_summary),
+                             ncol = nrow(all_summary),
+                             dimnames = list(all_summary$.study, all_summary$.study))
+
+  # Calculate distances (scale or unscale)
+  # Sub network 1  VS Sub network 2
+  if (nrow(sub2) < 1){
+    for (i in seq_len(nrow(sub1))) {
+      for (j in seq_len(nrow(sub2))) {
+
+        # Extract covariate means
+        vec1 <- as.numeric(sub1[i, paste0(covariates, "_mean")])
+        vec2 <- as.numeric(sub2[j, paste0(covariates, "_mean")])
+
+        # Extract SDs and compute pooled SDs
+        sd1 <- as.numeric(sub1[i, paste0(covariates, "_sd")])
+        sd2 <- as.numeric(sub2[j, paste0(covariates, "_sd")])
+        pooled_sd <- sqrt((sd1^2 + sd2^2) / 2)
+
+        # Avoid division by zero or NA
+        valid <- !is.na(vec1) & !is.na(vec2) & !is.na(pooled_sd) & pooled_sd > 0
+        diff_scaled <- (vec1[valid] - vec2[valid]) / pooled_sd[valid]
+        dist_matrix[i, j] <- sqrt(sum(diff_scaled^2))
+      }
+    }
+  }
+
+
+  # All studies vs all studies
+  for (i in seq_len(nrow(all_summary))) {
+    for (j in seq_len(nrow(all_summary))) {
+      if (i == j) next   # leave diagonal as NA
+
+      # Extract covariate means
+      vec1 <- as.numeric(all_summary[i, paste0(covariates, "_mean")])
+      vec2 <- as.numeric(all_summary[j, paste0(covariates, "_mean")])
+
+      # Extract SDs and compute pooled SDs
+      sd1 <- as.numeric(all_summary[i, paste0(covariates, "_sd")])
+      sd2 <- as.numeric(all_summary[j, paste0(covariates, "_sd")])
+      pooled_sd <- sqrt((sd1^2 + sd2^2) / 2)
+
+      # Avoid division by zero or NA
+      valid <- !is.na(vec1) & !is.na(vec2) & !is.na(pooled_sd) & pooled_sd > 0
+      diff_scaled <- (vec1[valid] - vec2[valid]) / pooled_sd[valid]
+      dist_matrix_full[i, j] <- sqrt(sum(diff_scaled^2))
+    }
+  }
+
+  if (nrow(sub2) < 1) {
+    return(list(
+    summary = all_summary,
+    distance_matrix = dist_matrix_full
+    ))
+  } else {
+    return(list(
+      summary = all_summary,
+      distance_matrix = dist_matrix,
+      distance_matrix_full = dist_matrix_full
+    ))
+  }
+  }
 
   stop_point <- "whatever"
   }
-}
 
