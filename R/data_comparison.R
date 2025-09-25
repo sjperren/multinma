@@ -306,6 +306,26 @@ population_distance <- function(network,
   }
   }
 
+  if (type == "energy") {
+    if (isTRUE(nrow(network$ipd) > 0)) {
+      ipd_covariate_data <- network$ipd
+      ipd_covariate_data[covariates] <- lapply(ipd_covariate_data[covariates], function(x) {
+        if (is.logical(x)) as.numeric(x) else x
+      })
+    }
+    if (isTRUE(nrow(network$agd_arm) > 0)) {
+      if (isTRUE(nrow(network$ipd) > 0)) {
+        for (i in seq_len(nrow(network$agd_arm))) {
+        network$agd_arm <- network$agd_arm[i, , drop = FALSE]
+
+      } else {
+        abort("IPD must be present when wanting to compare populations using method = `energy` on AgD data")
+      }
+
+    }
+  }
+
   stop_point <- "whatever"
   }
+}
 
