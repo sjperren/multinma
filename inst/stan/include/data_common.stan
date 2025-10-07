@@ -58,6 +58,7 @@ corr_matrix[RE ? max(which_RE) : 1] RE_cor; // RE correlation matrix
 int<lower=0, upper=1> nodesplit; // Node-splitting flag (yes = 1)
 
 // -- Priors --
+int<lower=0> fixed_baseline;
 // Scalar when connect_baseline = 0, study-specific vector otherwise
 int<lower=0, upper=1> connect_baseline;
 array[connect_baseline ? ns_ipd + ns_agd_arm : 1] int<lower=0,upper=3> prior_intercept_dist;

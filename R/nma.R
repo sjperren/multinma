@@ -331,6 +331,7 @@ nma <- function(network,
   }
 
   connect_flag <- 0
+  fixed_baseline <- 0
   # Check and apply connect_baseline specifications
   if (!is.null(connect_baseline)) {
     if ("type" %in% names(connect_baseline)) {
@@ -369,7 +370,9 @@ nma <- function(network,
             call. = FALSE
           )
         }
-        network <- apply_connect_fixed(network, spec$studies)
+        connect_fixed <- apply_connect_fixed(network, spec$studies)
+        network <- connect_fixed$network
+        fixed_baseline <- connect_fixed$n_collapsed
       }
     }
     if (spec$type == "random") {
@@ -1262,6 +1265,7 @@ if (class_effects == "exchangeable") {
     link = link,
     consistency = consistency,
     connect_flag = connect_flag,
+    fixed_baseline = fixed_baseline,
     ...,
     prior_intercept = prior_intercept,
     prior_trt = prior_trt,
@@ -1509,6 +1513,7 @@ nma.fit <- function(ipd_x, ipd_y,
                     link = NULL,
                     consistency = c("consistency", "ume", "nodesplit"),
                     connect_flag,
+                    fixed_baseline,
                     ...,
                     prior_intercept,
                     prior_intercept_sd,
@@ -1812,12 +1817,11 @@ if (class_effects == "exchangeable") {
     X_all_qr <- qr(X_all)
     X_all_Q <- qr.Q(X_all_qr) * sqrt(nrow(X_all) - 1)
     X_all_R <- qr.R(X_all_qr)[, sort.list(X_all_qr$pivot)] / sqrt(nrow(X_all) - 1)
-    if (X_all_qr$rank < ncol(X_all_R)) {
-      QR == FALSE
-      warning(glue::glue("Design matrix is rank-deficient (rank {X_all_qr$rank} < {ncol(X_all_R)}). ",
-                         "Falling back to using the original design matrix instead of QR decomposition."))
+    if (X_all_qr$rank < ncol(X_all_R)){
+      X_all_R_qr <- Matrix::qr(Matrix::Matrix(X_all_R))
+      X_all_R_inv <- as.matrix(Matrix::solve(X_all_R_qr, Matrix::Diagonal(ncol(X_all_R))))
     } else {
-    X_all_R_inv <- solve(X_all_R)
+      X_all_R_inv <- solve(X_all_R)
     }
   }
 
@@ -1883,7 +1887,8 @@ if (class_effects == "exchangeable") {
     class_effects = ifelse(class_effects == "exchangeable", 1, 0),
     #random baseline effect
     random_baseline = ifelse(random_baseline == TRUE, 1, 0),
-    connect_baseline = connect_flag
+    connect_baseline = connect_flag,
+    fixed_baseline = fixed_baseline
   )
 
   # Add priors
@@ -3856,7 +3861,10 @@ apply_connect_fixed <- function(network, studies) {
   }
 
   network$studies <- forcats::fct_collapse(network$studies, !!new_name := studies)
-  network
+  network$studies <- forcats::fct_unique(network$studies)
+  diff <- length(unique(network$agd_arm$.study)) + length(unique(network$ipd$.study)) - length(network$studies)
+
+  list(network = network, n_collapsed = diff)
 }
 
 #' Baseline synthesis wrapper around `nma()`
