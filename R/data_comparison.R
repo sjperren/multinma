@@ -12,7 +12,8 @@
 
 population_distance <- function(network,
                                 covariates = NULL,
-                                method = c("alm", "energy"),
+                                method = c("alm", "ESS"),
+                                distributions = NULL,
                                 binary = NULL) {
   # Check method argument
   method <- match.arg(method)
@@ -57,27 +58,137 @@ population_distance <- function(network,
     }
   }
 
+  # ESS comparison
+  if (method == "ESS") {
+    if (isTRUE(nrow(network$ipd) > 0)) {
+      ipd_covariate_data <- network$ipd
+
+      columns_to_keep <- c(covariates, ".study")
+
+      ipd_covariate_data <- ipd_covariate_data[columns_to_keep]
+      ipd_covariate_data <- as.data.frame(
+        lapply(ipd_covariate_data, function(x) {
+          if (is.logical(x)) as.numeric(x) else x
+        })
+      )
+
+      ipd_covariate_data <- split(ipd_covariate_data, ipd_covariate_data$.study, drop = TRUE)
+
+      ipd_covariate_data <- lapply(ipd_covariate_data, function(x) {
+        x$.study <- NULL
+        return(x)
+      })
+
+    } else {
+      abort("IPD must be present when wanting to compare populations using method = `ESS`")
+    }
+    if (isTRUE(nrow(network$agd_arm) > 0)) {
+      studies <- network$agd_arm$.study
+      arm_indices <- seq_len(nrow(network$agd_arm))
+      agd_arm_networks_list <- lapply(arm_indices, function(i) {
+        new_network <- network
+        new_network$agd_arm <- new_network$agd_arm[i, , drop = FALSE]
+        return(new_network)
+        })
+
+      names(agd_arm_networks_list) <- studies
+
+      agd_arm_networks_list <- lapply(agd_arm_networks_list, function(net) {
+        total_sample_size <- sum(net$agd_arm$.sample_size)
+        other_args <- list(x = net,
+                           n_int = total_sample_size)
+        all_args <- c(other_args, distributions)
+        net_integrated <- do.call(add_integration, all_args)
+        unnested_agd <- unnest_integration(net_integrated$agd_arm)
+        unnested_agd <- unnested_agd[covariates]
+        return(unnested_agd)
+        })
+        agd_arm_covariate_data <- split(agd_arm_networks_list, names(agd_arm_networks_list))
+        agd_arm_covariate_data <- lapply(agd_arm_covariate_data, function(sub_list) {
+          do.call(rbind, sub_list)
+        })
+    }
+    if (isTRUE(nrow(network$ipd) > 0))
+      all_data <- ipd_covariate_data
+    if (isTRUE(nrow(network$agd_arm) > 0))
+      all_data <- c(all_data, agd_arm_covariate_data)
+
+    regression_results <- list()
+
+    for (i in 1:(length(all_data) - 1)) {
+      for (j in (i + 1):length(all_data)) {
+        study1_df <- all_data[[i]]
+        study2_df <- all_data[[j]]
+
+        combined_df <- rbind(study1_df, study2_df)
+
+        combined_df$study_indicator <- c(rep(1, nrow(study1_df)),
+                                         rep(0, nrow(study2_df)))
+
+        model <- glm(study_indicator ~ . - .study,
+                     data = combined_df,
+                     family = "binomial")
+
+        pair_name <- paste(names(all_data)[i], names(all_data)[j], sep = "_vs_")
+
+        regression_results[[pair_name]] <- model
+      }
+    }
+    propensity_scores_list <- list()
+    for (pair_name in names(regression_results)) {
+      model <- regression_results[[pair_name]]
+      study_names <- strsplit(pair_name, "_vs_")[[1]]
+      study1_df <- all_data[[study_names[1]]]
+      study2_df <- all_data[[study_names[2]]]
+      combined_df <- rbind(study1_df, study2_df)
+
+      propensity_scores <- predict(model, newdata = combined_df, type = "response")
+
+      combined_df$propensity_score <- propensity_scores
+
+      propensity_scores_list[[pair_name]] <- combined_df
+    }
+      something <- "something"
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   # Check AGD contrast covariates (exact or with "_mean" suffix)
   if (isTRUE(nrow(network$agd_contrast) > 0)) {
     # Ensure .sample_size exists
-    if (!".sample_size" %in% colnames(network$agd_contrast)) {
-      abort("Aggregate contrast data must contain a '.sample_size' column.")
-    }
-    agd_covariates <- c(colnames(network$agd_contrast))
-    agd_covariates <- unique(c(agd_covariates, sub("_mean$", "", agd_covariates)))
-    missing_agd_covariates <- setdiff(covariates, agd_covariates)
-    if (length(missing_agd_covariates) > 0) {
-      rlang::abort(paste0(
-        "The following covariates are missing from the AGD contrast data: ",
-        paste(missing_agd_covariates, collapse = ", ")
-      ))
-    }
-
+    abort("Aggregate contrast data must contain a '.sample_size' column.")
+  }
+  agd_covariates <- c(colnames(network$agd_contrast))
+  agd_covariates <- unique(c(agd_covariates, sub("_mean$", "", agd_covariates)))
+  missing_agd_covariates <- setdiff(covariates, agd_covariates)
+  if (length(missing_agd_covariates) > 0) {
+    rlang::abort(paste0(
+      "The following covariates are missing from the AGD contrast data: ",
+      paste(missing_agd_covariates, collapse = ", ")
+    ))
   }
 
-  # Process IPD: Convert logical to numeric and average by study
-  if (method == "alm") {
-    if (nrow(network$ipd) > 0) {
+# Process IPD: Convert logical to numeric and average by study
+if (method == "alm") {
+  if (nrow(network$ipd) > 0) {
     ipd_covariate_data <- network$ipd
     ipd_covariate_data[covariates] <- lapply(ipd_covariate_data[covariates], function(x) {
       if (is.logical(x)) as.numeric(x) else x
@@ -89,7 +200,7 @@ population_distance <- function(network,
                                                sd = ~ sd(.x, na.rm = TRUE))),
         .groups = "drop"
       )
-    }
+  }
   # AgD function to get means
   extract_agd_means <- function(agd_df, binary = NULL) {
     if (nrow(agd_df) == 0) return(NULL)
@@ -147,18 +258,18 @@ population_distance <- function(network,
 
   idx <- which(is.na(agd_all), arr.ind = TRUE)
   if (nrow(idx)) {
-  rows <- idx[, "row"]
-  cols <- idx[, "col"]
-  studies <- if (".study" %in% names(agd_all)) agd_all$.study[rows] else rownames(agd_all)[rows]
-  vars <- colnames(agd_all)[cols]
-  miss <- unique(data.frame(study = studies, variable = vars, stringsAsFactors = FALSE))
+    rows <- idx[, "row"]
+    cols <- idx[, "col"]
+    studies <- if (".study" %in% names(agd_all)) agd_all$.study[rows] else rownames(agd_all)[rows]
+    vars <- colnames(agd_all)[cols]
+    miss <- unique(data.frame(study = studies, variable = vars, stringsAsFactors = FALSE))
 
-  lines_by_var <- tapply(miss$study, miss$variable, function(s) paste(unique(s), collapse = ", "))
-  stop(paste0(
-    "AgD covariate inputs contain missing values:\n",
-    paste(" • ", names(lines_by_var), " missing in studies: ", unname(lines_by_var), collapse = "\n"),
-    "\nPlease remove these variables from `covariates`"
-  ))
+    lines_by_var <- tapply(miss$study, miss$variable, function(s) paste(unique(s), collapse = ", "))
+    stop(paste0(
+      "AgD covariate inputs contain missing values:\n",
+      paste(" • ", names(lines_by_var), " missing in studies: ", unname(lines_by_var), collapse = "\n"),
+      "\nPlease remove these variables from `covariates`"
+    ))
   }
 
 
@@ -170,14 +281,14 @@ population_distance <- function(network,
       !!!setNames(
         unlist(
           lapply(covariates, function(cov) {
-              list(
-                rlang::expr(
-                  weighted.mean(!!rlang::sym(paste0(cov, "_mean")), w = .data$.sample_size, na.rm = TRUE)
-                ),
-                rlang::expr(
-                  sqrt(weighted.mean((!!rlang::sym(paste0(cov, "_sd")))^2, w = .data$.sample_size, na.rm = TRUE))
-                )
+            list(
+              rlang::expr(
+                weighted.mean(!!rlang::sym(paste0(cov, "_mean")), w = .data$.sample_size, na.rm = TRUE)
+              ),
+              rlang::expr(
+                sqrt(weighted.mean((!!rlang::sym(paste0(cov, "_sd")))^2, w = .data$.sample_size, na.rm = TRUE))
               )
+            )
           }),
           recursive = FALSE
         ),
@@ -186,11 +297,11 @@ population_distance <- function(network,
           lapply(covariates, function(cov) {
             c(paste0(cov, "_mean"), paste0(cov, "_sd"))
           }
+          )
         )
-      )
-    ),
-    .groups = "drop"
-  )
+      ),
+      .groups = "drop"
+    )
 
   ipd_summary$source <- "IPD"
   agd_summary$source <- "AGD"
@@ -294,8 +405,8 @@ population_distance <- function(network,
 
   if (nrow(sub2) < 1) {
     return(list(
-    summary = all_summary,
-    distance_matrix = dist_matrix_full
+      summary = all_summary,
+      distance_matrix = dist_matrix_full
     ))
   } else {
     return(list(
@@ -304,28 +415,9 @@ population_distance <- function(network,
       distance_matrix_full = dist_matrix_full
     ))
   }
-  }
+}
 
-  if (type == "energy") {
-    if (isTRUE(nrow(network$ipd) > 0)) {
-      ipd_covariate_data <- network$ipd
-      ipd_covariate_data[covariates] <- lapply(ipd_covariate_data[covariates], function(x) {
-        if (is.logical(x)) as.numeric(x) else x
-      })
-    }
-    if (isTRUE(nrow(network$agd_arm) > 0)) {
-      if (isTRUE(nrow(network$ipd) > 0)) {
-        for (i in seq_len(nrow(network$agd_arm))) {
-        network$agd_arm <- network$agd_arm[i, , drop = FALSE]
-
-      } else {
-        abort("IPD must be present when wanting to compare populations using method = `energy` on AgD data")
-      }
-
-    }
-  }
-
-  stop_point <- "whatever"
-  }
+?seq_le
+stop_point <- "whatever"
 }
 
