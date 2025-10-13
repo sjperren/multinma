@@ -59,6 +59,14 @@ vector[n_delta] f_delta =
     omega[1] = allbeta[totns + nt];
   }
 
+  // Class effects
+  vector[class_effects ? max(which_class) : 0] f_class; // product of class sds and ~N(0,1) to be added onto linear predictor
+
+  if (class_effects) {
+    f_class = class_mean[which_CE[which_class_trt]] - d[which_class_trt] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
+    d[which_class_trt] = class_mean[which_CE[which_class_trt]] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
+  }
+
   // -- IPD model --
   // We define the IPD and AgD models here in the transformed parameters block,
   // as the linear predictors are required to calculate the log likelihood
@@ -83,14 +91,7 @@ vector[n_delta] f_delta =
       X_ipd * beta_tilde + offset_ipd :
       X_ipd * beta_tilde;
     }
-  }
 
-  vector[class_effects ? max(which_class) : 0] f_class; // product of class sds and ~N(0,1) to be added onto linear predictor
-
-  if (class_effects) {
-    f_class = class_mean[which_CE[which_class_trt]] - d[which_class_trt] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
-    d[which_class_trt] = class_mean[which_CE[which_class_trt]] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
-  }
   // Add class effects contribution
   if (class_effects) {
     for (i in 1:ni_ipd) {
@@ -105,6 +106,7 @@ vector[n_delta] f_delta =
     for (i in 1:ni_ipd) {
       eta_ipd[i] += f_baseline[ipd_study[ipd_arm[i]]];
     }
+  }
   }
 
   // -- AgD model (contrast-based) --
