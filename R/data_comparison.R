@@ -125,7 +125,7 @@ population_distance <- function(network,
         combined_df$study_indicator <- c(rep(1, nrow(study1_df)),
                                          rep(0, nrow(study2_df)))
 
-        model <- glm(study_indicator ~ . - .study,
+        model <- glm(study_indicator ~ .,
                      data = combined_df,
                      family = "binomial")
 
