@@ -4,7 +4,7 @@
 #'
 #' @param network An `nma_data` object.
 #' @param covariates Character vector of covariate names. Cannot except categorical variables
-#' @param method Character; "alm", or "energy". Determines the distance calculation method.
+#' @param method Character; "euclidean", or "propensity". Determines the distance calculation method.
 #' @param binary If AgD is within the network, binary variables must be stated.
 #'
 #' @return A list with a `summary` dataframe and `distance_matrix`.
@@ -12,7 +12,7 @@
 
 population_distance <- function(network,
                                 covariates = NULL,
-                                method = c("alm", "ESS"),
+                                method = c("euclidean", "propensity"),
                                 distributions = NULL,
                                 binary = NULL) {
   # Check method argument
@@ -58,8 +58,8 @@ population_distance <- function(network,
     }
   }
 
-  # ESS comparison
-  if (method == "ESS") {
+  # propensity comparison
+  if (method == "propensity") {
     if (isTRUE(nrow(network$ipd) > 0)) {
       ipd_covariate_data <- network$ipd
 
@@ -80,7 +80,7 @@ population_distance <- function(network,
       })
 
     } else {
-      abort("IPD must be present when wanting to compare populations using method = `ESS`")
+      abort("IPD must be present when wanting to compare populations using method = `propensity`")
     }
     if (isTRUE(nrow(network$agd_arm) > 0)) {
       studies <- network$agd_arm$.study
@@ -139,29 +139,59 @@ population_distance <- function(network,
       model <- regression_results[[pair_name]]
       study_names <- strsplit(pair_name, "_vs_")[[1]]
       study1_df <- all_data[[study_names[1]]]
+      study1_df$study_indicator <- 1
       study2_df <- all_data[[study_names[2]]]
+      study2_df$study_indicator <- 0
       combined_df <- rbind(study1_df, study2_df)
 
       propensity_scores <- predict(model, newdata = combined_df, type = "response")
 
       combined_df$propensity_score <- propensity_scores
 
+      combined_df$ate_weight <- ifelse(
+        combined_df$study_indicator == 1,
+        1 / combined_df$propensity_score,
+        1 / (1 - combined_df$propensity_score)
+      )
+
       propensity_scores_list[[pair_name]] <- combined_df
     }
-      something <- "something"
+    ess_summary <- data.frame(
+      comparison = character(),
+      original_n = integer(),
+      ess = numeric(),
+      ess_reduction_percent = numeric(),
+      stringsAsFactors = FALSE
+    )
+
+    for (pair_name in names(propensity_scores_list)) {
+
+      # Get the data frame for the current pair
+      df <- propensity_scores_list[[pair_name]]
+
+      # Calculate the weighting
+      sum_of_weights <- sum(df$ate_weight)
+      sum_of_squared_weights <- sum(df$ate_weight^2)
+      effective_sample_size <- (sum_of_weights^2) / sum_of_squared_weights
+
+      # e. Calculate the percentage reduction
+      original_n <- nrow(df)
+      ess_percent <- (effective_sample_size / original_n) * 100
+
+      # f. Add the results to our summary data frame
+      ess_summary <- rbind(ess_summary, data.frame(
+        comparison = pair_name,
+        original_n = original_n,
+        ess = effective_sample_size,
+        ess_percent_of_original = ess_percent
+      ))
+      ess_summary <- ess_summary[order(ess_summary$ess_percent_of_original, decreasing = TRUE), ]
+    }
+    return(list(
+      propensity_scores = propensity_scores_list,
+      summary = ess_summary
+    ))
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -187,7 +217,7 @@ population_distance <- function(network,
   }
 
 # Process IPD: Convert logical to numeric and average by study
-if (method == "alm") {
+if (method == "euclidean") {
   if (nrow(network$ipd) > 0) {
     ipd_covariate_data <- network$ipd
     ipd_covariate_data[covariates] <- lapply(ipd_covariate_data[covariates], function(x) {
@@ -245,7 +275,7 @@ if (method == "alm") {
       }
     }
 
-    # Update the covariates list inside alm(), if needed
+    # Update the covariates list if needed
     assign("covariates", retained_covariates, envir = parent.env(environment()))
 
     return(df)
