@@ -387,6 +387,12 @@ nma <- function(network,
   }
 }
 
+  # Check to see if there are mixed studies
+  ipd_studies <- unique(network$ipd$.study)
+  agd_arm_studies <- unique(network$agd_arm$.study)
+  mixed_studies <- intersect(ipd_studies, agd_arm_studies)
+  mixed_studies <- length(mixed_studies)
+
   # Check model arguments
   consistency <- rlang::arg_match(consistency)
   if (length(consistency) > 1) abort("`consistency` must be a single string.")
@@ -1266,6 +1272,7 @@ if (class_effects == "exchangeable") {
     consistency = consistency,
     connect_flag = connect_flag,
     fixed_baseline = fixed_baseline,
+    mixed_studies = mixed_studies,
     ...,
     prior_intercept = prior_intercept,
     prior_trt = prior_trt,
@@ -1514,6 +1521,7 @@ nma.fit <- function(ipd_x, ipd_y,
                     consistency = c("consistency", "ume", "nodesplit"),
                     connect_flag,
                     fixed_baseline,
+                    mixed_studies,
                     ...,
                     prior_intercept,
                     prior_intercept_sd,
@@ -1888,7 +1896,8 @@ if (class_effects == "exchangeable") {
     #random baseline effect
     random_baseline = ifelse(random_baseline == TRUE, 1, 0),
     connect_baseline = connect_flag,
-    fixed_baseline = fixed_baseline
+    fixed_baseline = fixed_baseline,
+    mixed_studies = mixed_studies
   )
 
   # Add priors
