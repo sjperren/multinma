@@ -36,6 +36,17 @@ vector[n_delta] f_delta =
     mu = allbeta[1:totns];
   }
 
+  // Product of baseline sds and ~N(0,1) to be added onto linear predictor
+  vector[random_baseline ? totns : 0] f_baseline;
+
+  if (random_baseline == 1) {
+    real bmean = baseline_mean[1];
+    real bsd   = baseline_sd[1];
+
+    f_baseline = rep_vector(bmean, totns) - mu + bsd .* z_baseline;
+    mu = rep_vector(bmean, totns) + bsd .* z_baseline;
+  }
+
   // -- Regression predictors --
   // Pull out beta from allbeta
   if (nX - totns - (nt - 1) - nodesplit) {
@@ -46,6 +57,14 @@ vector[n_delta] f_delta =
   // Pull out omega from allbeta
   if (nodesplit) {
     omega[1] = allbeta[totns + nt];
+  }
+
+  // Class effects
+  vector[class_effects ? max(which_class) : 0] f_class; // product of class sds and ~N(0,1) to be added onto linear predictor
+
+  if (class_effects) {
+    f_class = class_mean[which_CE[which_class_trt]] - d[which_class_trt] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
+    d[which_class_trt] = class_mean[which_CE[which_class_trt]] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
   }
 
   // -- IPD model --
@@ -72,21 +91,22 @@ vector[n_delta] f_delta =
       X_ipd * beta_tilde + offset_ipd :
       X_ipd * beta_tilde;
     }
-  }
 
-  vector[class_effects ? max(which_class) : 0] f_class; // product of class sds and ~N(0,1) to be added onto linear predictor
-
-  if (class_effects) {
-    f_class = class_mean[which_CE[which_class_trt]] - d[which_class_trt] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
-    d[which_class_trt] = class_mean[which_CE[which_class_trt]] + class_sd[which_CE_sd[which_class_trt]] .* z_class;
-  }
   // Add class effects contribution
   if (class_effects) {
     for (i in 1:ni_ipd) {
       if (ipd_trt[ipd_arm[i]] > 1 && which_CE[ipd_trt[ipd_arm[i]] - 1]) {
-        eta_ipd[i] += f_class[which_class[ipd_trt[ipd_arm[i] - 1]]];
+        eta_ipd[i] += f_class[which_class[ipd_trt[ipd_arm[i]] - 1]];
       }
     }
+  }
+
+  // Add random baseline contribution
+  if (random_baseline) {
+    for (i in 1:ni_ipd) {
+      eta_ipd[i] += f_baseline[ipd_study[ipd_arm[i]]];
+    }
+  }
   }
 
   // -- AgD model (contrast-based) --

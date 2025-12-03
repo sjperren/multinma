@@ -25,7 +25,7 @@ array[RE_sparse ? n_delta + 1 : 0] int RE_L_u = RE_sparse ? csr_extract_u(RE_L) 
 // int totni = ni_ipd + nint * (ni_agd_arm + ni_agd_contrast);
 
 // Total number of study intercepts (none for contrast-based data)
-int totns = ns_ipd + ns_agd_arm; // + ns_agd_contrast;
+int totns = ns_ipd + ns_agd_arm - (fixed_baseline ? fixed_baseline : 0) - (mixed_studies ? mixed_studies : 0); // + ns_agd_contrast;
 
 // Number of IPD arms
 // int<lower=0> narm_ipd = ni_ipd ? max(ipd_arm) : 0;
@@ -79,7 +79,7 @@ int<lower=0> n_class_trts = num_elements(which_gt0a(which_CE));  // Number of tr
 array[n_class_trts] int which_class_trt = which_gt0a(which_CE); // Vector mapping classes to treatments
  if (class_effects) {
     for (c in 1:n_class) {
-      for (t in 1:nt - 1) {
+      for (t in 1:(nt - 1)) {
         if (which_CE[t] == c) {
           which_class_sd[c] = which_CE_sd[t];
           break;
