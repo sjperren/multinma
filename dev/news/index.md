@@ -1,13 +1,69 @@
 # Changelog
 
-## multinma 0.8.1.9000
+## multinma 0.9.1.9000
 
+- Feature: New function
+  [`bind_chains()`](https://dmphillippo.github.io/multinma/dev/reference/bind_chains.md)
+  combines multiple runs of the same model into a single model object.
+  For MCMC arrays, a new
+  [`cbind.mcmc_array()`](https://dmphillippo.github.io/multinma/dev/reference/bind_chains.md)
+  method combines multiple MCMC arrays containing samples of the same
+  parameters into a single MCMC array.
+- Improvement:
+  [`relative_effects()`](https://dmphillippo.github.io/multinma/dev/reference/relative_effects.md)
+  now works when `newdata` contains integration points. Furthermore,
+  [`relative_effects()`](https://dmphillippo.github.io/multinma/dev/reference/relative_effects.md)
+  will now ask for integration points to be provided for models that
+  involve non-linear covariate terms, so that these can be averaged over
+  correctly.
+- Fix: Error in
+  [`dic()`](https://dmphillippo.github.io/multinma/dev/reference/dic.md)
+  for models with IPD and a Normal likelihood, caused by dplyr
+  deprecation.
+
+## multinma 0.9.1
+
+CRAN release: 2026-04-16
+
+- Fix: UBSAN warnings in CRAN additional tests, caused by unnecessary
+  indexing of zero-dimensional matrices.
+
+## multinma 0.9.0
+
+CRAN release: 2026-04-13
+
+- Feature: Regression on baseline risk is now supported, with a new
+  `.mu` special variable for `regression` formulas which can interact
+  with treatment, e.g. `regression = ~.mu:.trt`. Following TSD3, the
+  regression is performed on the estimated intercept parameter not the
+  observed baseline risk, to correctly capture uncertainty and account
+  for correlations between baseline risk and treatment effect. A new
+  Certolizumab vignette demonstrates the new features. Thanks to
+  [@ndunnewind](https://github.com/ndunnewind) (PR
+  [\#36](https://github.com/dmphillippo/multinma/issues/36)).
 - Feature: New `subset` argument to
   [`posterior_ranks()`](https://dmphillippo.github.io/multinma/dev/reference/posterior_ranks.md)
   and
   [`posterior_rank_probs()`](https://dmphillippo.github.io/multinma/dev/reference/posterior_ranks.md)
   allows ranks to be calculated for a smaller decision set of treatments
   than the full analysis set.
+- Feature: New
+  [`knots.stan_nma()`](https://dmphillippo.github.io/multinma/dev/reference/knots.stan_nma.md)
+  method for easily obtaining the knots from a fitted M-spline or
+  piecewise exponential model, rather than working with the spline basis
+  objects `fit$basis`
+  ([\#53](https://github.com/dmphillippo/multinma/issues/53)).
+- Feature: New `expand` argument for
+  [`predict.stan_nma()`](https://dmphillippo.github.io/multinma/dev/reference/predict.stan_nma.md),
+  to allow predictions to be made only for observed treatments in each
+  study/for each individual rather than expanding out predictions for
+  every treatment.
+- Fix: [`predict()`](https://rdrr.io/r/stats/predict.html) now works
+  correctly for `newdata` when `aux_by` was used, rather than giving
+  errors (including
+  [\#50](https://github.com/dmphillippo/multinma/issues/50)).
+- Fix: [`predict()`](https://rdrr.io/r/stats/predict.html) no longer
+  errors when using a single `baseline` for multiple `newdata` studies.
 - Fix: Bug where generalised gamma models with an `aux_regression` model
   on the auxiliary shape parameters gave an error when trying to use
   [`predict()`](https://rdrr.io/r/stats/predict.html) or

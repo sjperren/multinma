@@ -13,8 +13,8 @@
 <link rel="manifest" href="../site.webmanifest">
 <!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">multinma</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.1.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.9.1.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
     <li><a class="dropdown-item" href="../articles/example_atrial_fibrillation.html">Example: Atrial fibrillation</a></li>
     <li><a class="dropdown-item" href="../articles/example_bcg_vaccine.html">Example: BCG vaccine for tuberculosis</a></li>
     <li><a class="dropdown-item" href="../articles/example_blocker.html">Example: Beta blockers</a></li>
+    <li><a class="dropdown-item" href="../articles/example_certolizumab.html">Example: Certolizumab</a></li>
     <li><a class="dropdown-item" href="../articles/example_diabetes.html">Example: Diabetes</a></li>
     <li><a class="dropdown-item" href="../articles/example_dietary_fat.html">Example: Dietary fat</a></li>
     <li><a class="dropdown-item" href="../articles/example_hta_psoriasis.html">Example: Plaque psoriasis HTA report</a></li>
@@ -164,7 +165,7 @@ reference treatment.</p>
 <p>Plot the network structure.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">thrombo_net</span>, weight_edges <span class="op">=</span> <span class="cn">TRUE</span>, weight_nodes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_net_plot-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_net_plot-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
 <h2 id="fixed-effects-nma">Fixed effects NMA<a class="anchor" aria-label="anchor" href="#fixed-effects-nma"></a>
@@ -220,7 +221,7 @@ method:</p>
 <span><span class="co">#&gt; d[UK]           1</span></span>
 <span><span class="co">#&gt; lp__            1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec  4 16:35:51 2025.</span></span>
+<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Fri Jul  3 13:32:17 2026.</span></span>
 <span><span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span></span>
 <span><span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span></span>
 <span><span class="co">#&gt; convergence, Rhat=1).</span></span></code></pre></div>
@@ -233,7 +234,7 @@ changing the <code>pars</code> argument:</p>
 the <code><a href="../reference/plot_prior_posterior.html">plot_prior_posterior()</a></code> function:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_prior_posterior.html">plot_prior_posterior</a></span><span class="op">(</span><span class="va">thrombo_fit</span>, prior <span class="op">=</span> <span class="st">"trt"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_pp_plot-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_pp_plot-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>Model fit can be checked using the <code><a href="../reference/dic.html">dic()</a></code> function</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">dic_consistency</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dic.html">dic</a></span><span class="op">(</span><span class="va">thrombo_fit</span><span class="op">)</span><span class="op">)</span></span>
@@ -244,7 +245,7 @@ the <code><a href="../reference/plot_prior_posterior.html">plot_prior_posterior(
 corresponding <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dic_consistency</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_resdev_plot-1.png" class="r-plt" width="1152" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_resdev_plot-1.png" class="r-plt" alt="" width="1152" style="display: block; margin: auto;"></p>
 <p>There are a number of points which are not very well fit by the
 model, having posterior mean residual deviance contributions greater
 than 1.</p>
@@ -317,7 +318,7 @@ assess the consistency assumption. Again, we use the function
 <span><span class="co">#&gt; d[UK vs. t-PA]         4645    1</span></span>
 <span><span class="co">#&gt; lp__                   1655    1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec  4 16:36:03 2025.</span></span>
+<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Fri Jul  3 13:32:26 2026.</span></span>
 <span><span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span></span>
 <span><span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span></span>
 <span><span class="co">#&gt; convergence, Rhat=1).</span></span></code></pre></div>
@@ -340,7 +341,7 @@ under the two models (a so-called “dev-dev” plot). Passing two
 to the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method produces this dev-dev plot:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dic_consistency</span>, <span class="va">dic_ume</span>, show_uncertainty <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_devdev_plot-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_devdev_plot-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>The four points lying in the lower right corner of the plot have much
 lower posterior mean residual deviance under the UME model, indicating
 that these data are potentially inconsistent. These points correspond to
@@ -617,7 +618,7 @@ comparison.</p>
 using the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">thrombo_nodesplit</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_nodesplit-1.png" class="r-plt" width="672" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_nodesplit-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
 <p>We can also plot the posterior distributions of the inconsistency
 factors <span class="math inline">\omega</span>, again using the
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method. Here, we specify a “halfeye” plot of the
@@ -627,7 +628,7 @@ plot layout with standard <code>ggplot2</code> functions.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">thrombo_nodesplit</span>, pars <span class="op">=</span> <span class="st">"omega"</span>, stat <span class="op">=</span> <span class="st">"halfeye"</span>, ref_line <span class="op">=</span> <span class="fl">0</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">comparison</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_null.html" class="external-link">facet_null</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_nodesplit_omega-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_nodesplit_omega-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>Notice again that the posterior distribution of the inconsistency
 factor for the ASPAC vs. Acc t-PA comparison lies far from 0, indicating
 substantial inconsistency between the direct and indirect evidence on
@@ -680,7 +681,7 @@ produced using the <code><a href="../reference/relative_effects.html">relative_e
 <span><span class="co">#&gt; d[UK vs. t-PA]            -0.20 0.22 -0.63 -0.35 -0.20 -0.06  0.23     4686     3328    1</span></span>
 <span><span class="co">#&gt; d[UK vs. TNK]             -0.03 0.23 -0.47 -0.19 -0.03  0.13  0.42     4894     3502    1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">thrombo_releff</span>, ref_line <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_releff-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_releff-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>Treatment rankings, rank probabilities, and cumulative rank
 probabilities.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
@@ -696,7 +697,7 @@ probabilities.</p>
 <span><span class="co">#&gt; rank[TNK]       3.47 1.25    2   3   3   4     6     5166     3851    1</span></span>
 <span><span class="co">#&gt; rank[UK]        3.92 2.69    1   2   3   6     9     4645       NA    1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">thrombo_ranks</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_ranks-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_ranks-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">thrombo_rankprobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/posterior_ranks.html">posterior_rank_probs</a></span><span class="op">(</span><span class="va">thrombo_fit</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              p_rank[1] p_rank[2] p_rank[3] p_rank[4] p_rank[5] p_rank[6] p_rank[7] p_rank[8]</span></span>
@@ -720,7 +721,7 @@ probabilities.</p>
 <span><span class="co">#&gt; d[TNK]            0.00</span></span>
 <span><span class="co">#&gt; d[UK]             0.15</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">thrombo_rankprobs</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_rankprobs-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_rankprobs-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="op">(</span><span class="va">thrombo_cumrankprobs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/posterior_ranks.html">posterior_rank_probs</a></span><span class="op">(</span><span class="va">thrombo_fit</span>, cumulative <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;              p_rank[1] p_rank[2] p_rank[3] p_rank[4] p_rank[5] p_rank[6] p_rank[7] p_rank[8]</span></span>
@@ -744,17 +745,16 @@ probabilities.</p>
 <span><span class="co">#&gt; d[TNK]               1</span></span>
 <span><span class="co">#&gt; d[UK]                1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">thrombo_cumrankprobs</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_thrombolytics_files/figure-html/thrombo_cumrankprobs-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_thrombolytics_files/figure-html/thrombo_cumrankprobs-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Boland2003" class="csl-entry">
-Boland, A., Y. Dundar, A. Bagust, A. Haycox, R. Hill, R. Mujica Mota, T.
-Walley, and R. Dickson. 2003. <span>“Early Thrombolysis for the
-Treatment of Acute Myocardial Infarction: A Systematic Review and
-Economic Evaluation.”</span> <em>Health Technology Assessment</em> 7
+Boland, A., Y. Dundar, A. Bagust, et al. 2003. <span>“Early Thrombolysis
+for the Treatment of Acute Myocardial Infarction: A Systematic Review
+and Economic Evaluation.”</span> <em>Health Technology Assessment</em> 7
 (15). <a href="https://doi.org/10.3310/hta7150" class="external-link">https://doi.org/10.3310/hta7150</a>.
 </div>
 <div id="ref-Dias2010" class="csl-entry">
@@ -765,10 +765,10 @@ Meta-Analysis.”</span> <em>Statistics in Medicine</em> 29 (7-8): 932–44.
 </div>
 <div id="ref-TSD4" class="csl-entry">
 Dias, S., N. J. Welton, A. J. Sutton, D. M. Caldwell, G. Lu, and A. E.
-Ades. 2011. <span>“<span>NICE DSU Technical Support Document</span> 4:
+Ades. 2011. <em><span>NICE DSU Technical Support Document</span> 4:
 Inconsistency in Networks of Evidence Based on Randomised Controlled
-Trials.”</span> <span>National Institute for Health and Care
-Excellence</span>. <a href="https://www.sheffield.ac.uk/nice-dsu" class="external-link">https://www.sheffield.ac.uk/nice-dsu</a>.
+Trials</em>. <span>National Institute for Health and Care
+Excellence</span>. <a href="https://sheffield.ac.uk/nice-dsu" class="external-link">https://sheffield.ac.uk/nice-dsu</a>.
 </div>
 <div id="ref-Lu2006" class="csl-entry">
 Lu, G. B., and A. E. Ades. 2006. <span>“Assessing Evidence Inconsistency

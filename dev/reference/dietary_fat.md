@@ -48,11 +48,11 @@ Dias S, Welton NJ, Sutton AJ, Ades AE (2011). “NICE DSU Technical
 Support Document 2: A generalised linear modelling framework for
 pair-wise and network meta-analysis of randomised controlled trials.”
 National Institute for Health and Care Excellence.
-<https://www.sheffield.ac.uk/nice-dsu>.  
+<https://sheffield.ac.uk/nice-dsu>.  
   
 Hooper L, Summerbell CD, Higgins JPT, Thompson RL, Clements G, Capps N,
 Davey Smith G, Riemersma R, Ebrahim S (2000). “Reduced or modified
 dietary fat for preventing cardiovascular disease.” *Cochrane Database
-of Systematic Reviews*. ISSN 1465-1858,
+of Systematic Reviews*. ISSN 1465-1858.
 [doi:10.1002/14651858.CD002137](https://doi.org/10.1002/14651858.CD002137)
 .

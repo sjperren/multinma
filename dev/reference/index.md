@@ -299,6 +299,11 @@ arrays and matrices.
 - [`as.stanfit()`](https://dmphillippo.github.io/multinma/dev/reference/as.stanfit.md)
   : as.stanfit
 
+- [`bind_chains()`](https://dmphillippo.github.io/multinma/dev/reference/bind_chains.md)
+  [`cbind(`*`<stan_nma>`*`)`](https://dmphillippo.github.io/multinma/dev/reference/bind_chains.md)
+  [`cbind(`*`<mcmc_array>`*`)`](https://dmphillippo.github.io/multinma/dev/reference/bind_chains.md)
+  : Bind chains
+
 ## M-spline hazards
 
 Functions for flexibile M-splines on the baseline hazard.
@@ -312,6 +317,8 @@ Functions for flexibile M-splines on the baseline hazard.
   : Distribution functions for M-spline baseline hazards
 - [`make_knots()`](https://dmphillippo.github.io/multinma/dev/reference/make_knots.md)
   : Knot locations for M-spline baseline hazard models
+- [`knots(`*`<stan_nma>`*`)`](https://dmphillippo.github.io/multinma/dev/reference/knots.stan_nma.md)
+  : Knot locations for a fitted model
 - [`softmax()`](https://dmphillippo.github.io/multinma/dev/reference/softmax.md)
   [`inv_softmax()`](https://dmphillippo.github.io/multinma/dev/reference/softmax.md)
   : Softmax transform
@@ -335,6 +342,8 @@ Datasets used for examples and vignettes.
   : BCG vaccination
 - [`blocker`](https://dmphillippo.github.io/multinma/dev/reference/blocker.md)
   : Beta blockers to prevent mortality after MI
+- [`certolizumab`](https://dmphillippo.github.io/multinma/dev/reference/certolizumab.md)
+  : Certolizumab
 - [`diabetes`](https://dmphillippo.github.io/multinma/dev/reference/diabetes.md)
   : Incidence of diabetes in trials of antihypertensive drugs
 - [`dietary_fat`](https://dmphillippo.github.io/multinma/dev/reference/dietary_fat.md)

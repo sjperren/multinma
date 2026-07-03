@@ -13,8 +13,8 @@
 <link rel="manifest" href="../site.webmanifest">
 <!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">multinma</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.1.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.9.1.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
     <li><a class="dropdown-item" href="../articles/example_atrial_fibrillation.html">Example: Atrial fibrillation</a></li>
     <li><a class="dropdown-item" href="../articles/example_bcg_vaccine.html">Example: BCG vaccine for tuberculosis</a></li>
     <li><a class="dropdown-item" href="../articles/example_blocker.html">Example: Beta blockers</a></li>
+    <li><a class="dropdown-item" href="../articles/example_certolizumab.html">Example: Certolizumab</a></li>
     <li><a class="dropdown-item" href="../articles/example_diabetes.html">Example: Diabetes</a></li>
     <li><a class="dropdown-item" href="../articles/example_dietary_fat.html">Example: Dietary fat</a></li>
     <li><a class="dropdown-item" href="../articles/example_hta_psoriasis.html">Example: Plaque psoriasis HTA report</a></li>
@@ -199,7 +200,7 @@ method:</p>
 <span><span class="co">#&gt; d[Beta Blocker]    -0.26    0.00 0.05    -0.36    -0.30    -0.26    -0.23    -0.16  3693    1</span></span>
 <span><span class="co">#&gt; lp__            -5960.39    0.09 3.48 -5968.17 -5962.42 -5960.09 -5957.94 -5954.57  1363    1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec  4 16:13:08 2025.</span></span>
+<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Fri Jul  3 13:18:46 2026.</span></span>
 <span><span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span></span>
 <span><span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span></span>
 <span><span class="co">#&gt; convergence, Rhat=1).</span></span></code></pre></div>
@@ -212,7 +213,7 @@ changing the <code>pars</code> argument:</p>
 the <code><a href="../reference/plot_prior_posterior.html">plot_prior_posterior()</a></code> function:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_prior_posterior.html">plot_prior_posterior</a></span><span class="op">(</span><span class="va">blocker_fit_FE</span>, prior <span class="op">=</span> <span class="st">"trt"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_FE_pp_plot-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_FE_pp_plot-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="random-effects-meta-analysis">Random effects meta-analysis<a class="anchor" aria-label="anchor" href="#random-effects-meta-analysis"></a>
@@ -255,7 +256,7 @@ method:</p>
 <span><span class="co">#&gt; lp__            -5970.70    0.17 5.66 -5982.57 -5974.43 -5970.52 -5966.81 -5960.34  1072    1</span></span>
 <span><span class="co">#&gt; tau                 0.13    0.00 0.08     0.01     0.07     0.13     0.19     0.31   928    1</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Thu Dec  4 16:13:12 2025.</span></span>
+<span><span class="co">#&gt; Samples were drawn using NUTS(diag_e) at Fri Jul  3 13:18:49 2026.</span></span>
 <span><span class="co">#&gt; For each parameter, n_eff is a crude measure of effective sample size,</span></span>
 <span><span class="co">#&gt; and Rhat is the potential scale reduction factor on split chains (at </span></span>
 <span><span class="co">#&gt; convergence, Rhat=1).</span></span></code></pre></div>
@@ -269,7 +270,7 @@ examined by changing the <code>pars</code> argument:</p>
 the <code><a href="../reference/plot_prior_posterior.html">plot_prior_posterior()</a></code> function:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_prior_posterior.html">plot_prior_posterior</a></span><span class="op">(</span><span class="va">blocker_fit_RE</span>, prior <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"trt"</span>, <span class="st">"het"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_RE_pp_plot-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_RE_pp_plot-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="model-comparison">Model comparison<a class="anchor" aria-label="anchor" href="#model-comparison"></a>
@@ -293,10 +294,10 @@ very similar and the FE model may be preferred for parsimony.</p>
 corresponding <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dic_FE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_FE_resdev_plot-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_FE_resdev_plot-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dic_RE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_RE_resdev_plot-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_RE_resdev_plot-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>There are a number of points which are not very well fit by the FE
 model, having posterior mean residual deviance contributions greater
 than 1. Study 14 is a particularly poor fit under the FE model, but its
@@ -310,12 +311,12 @@ method, with <code>type = "leverage"</code>.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dic_FE</span>, type <span class="op">=</span> <span class="st">"leverage"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="co"># Add labels for points outside DIC=3</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">parameter</span><span class="op">)</span>, data <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">dic</span> <span class="op">&gt;</span> <span class="fl">3</span><span class="op">)</span>, vjust <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_leverage_FE-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_leverage_FE-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">dic_RE</span>, type <span class="op">=</span> <span class="st">"leverage"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="co"># Add labels for points outside DIC=3</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">geom_text</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>label <span class="op">=</span> <span class="va">parameter</span><span class="op">)</span>, data <span class="op">=</span> <span class="op">~</span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">.</span>, <span class="va">dic</span> <span class="op">&gt;</span> <span class="fl">3</span><span class="op">)</span>, vjust <span class="op">=</span> <span class="op">-</span><span class="fl">0.5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_leverage_RE-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_leverage_RE-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>These plot the leverage for each data point (i.e. its contribution to
 model complexity <span class="math inline">p_D</span>) against the
 square root of the residual deviance. The sign of the square root
@@ -352,7 +353,7 @@ produce predicted log odds).</p>
 <span><span class="co">#&gt; pred[Control]      0.11 0.05 0.04 0.07 0.10 0.14  0.24     4073     3875    1</span></span>
 <span><span class="co">#&gt; pred[Beta Blocker] 0.09 0.04 0.03 0.06 0.08 0.11  0.19     4086     3948    1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pred_FE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_pred_FE-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_pred_FE-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pred_RE</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">blocker_fit_RE</span>, </span>
 <span>                   baseline <span class="op">=</span> <span class="fu"><a href="../reference/distr.html">distr</a></span><span class="op">(</span><span class="va">qnorm</span>, mean <span class="op">=</span> <span class="op">-</span><span class="fl">2.2</span>, sd <span class="op">=</span> <span class="fl">3.3</span><span class="op">^</span><span class="op">-</span><span class="fl">0.5</span><span class="op">)</span>, </span>
@@ -362,7 +363,7 @@ produce predicted log odds).</p>
 <span><span class="co">#&gt; pred[Control]      0.11 0.05 0.04 0.07 0.10 0.14  0.25     4384     3718    1</span></span>
 <span><span class="co">#&gt; pred[Beta Blocker] 0.09 0.05 0.03 0.06 0.08 0.11  0.20     4373     3486    1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pred_RE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_pred_RE-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_pred_RE-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>If instead of information on the baseline logit-probability of
 mortality we have event counts, we can use these to construct a Beta
 distribution for the baseline probability of mortality. For example, if
@@ -383,7 +384,7 @@ logit-probability).</p>
 <span><span class="co">#&gt; pred[Control]      0.11 0.05 0.03 0.07 0.10 0.14  0.23     3493     3846    1</span></span>
 <span><span class="co">#&gt; pred[Beta Blocker] 0.09 0.04 0.02 0.06 0.08 0.11  0.19     3523     3885    1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pred_FE_beta</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_pred_FE_beta-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_pred_FE_beta-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pred_RE_beta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">blocker_fit_RE</span>, </span>
 <span>                        baseline <span class="op">=</span> <span class="fu"><a href="../reference/distr.html">distr</a></span><span class="op">(</span><span class="va">qbeta</span>, <span class="fl">4</span>, <span class="fl">36</span><span class="op">-</span><span class="fl">4</span><span class="op">)</span>,</span>
@@ -394,7 +395,7 @@ logit-probability).</p>
 <span><span class="co">#&gt; pred[Control]      0.11 0.05 0.03 0.07 0.10 0.14  0.23     3990     3890    1</span></span>
 <span><span class="co">#&gt; pred[Beta Blocker] 0.09 0.04 0.03 0.06 0.08 0.11  0.19     4017     3918    1</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">pred_RE_beta</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_blocker_files/figure-html/blocker_pred_RE_beta-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_blocker_files/figure-html/blocker_pred_RE_beta-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>Notice that these results are nearly equivalent to those calculated
 above using the Normal distribution for the baseline logit-probability,
 since these event counts correspond to approximately the same
@@ -403,17 +404,17 @@ distribution on the logit-probability.</p>
 <div class="section level2 unnumbered">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-Carlin1992" class="csl-entry">
 Carlin, J. B. 1992. <span>“Meta-Analysis for 2 x 2 Tables: A Bayesian
 Approach.”</span> <em>Statistics in Medicine</em> 11 (2): 141–58. <a href="https://doi.org/10.1002/sim.4780110202" class="external-link">https://doi.org/10.1002/sim.4780110202</a>.
 </div>
 <div id="ref-TSD2" class="csl-entry">
 Dias, S., N. J. Welton, A. J. Sutton, and A. E. Ades. 2011.
-<span>“<span>NICE DSU Technical Support Document</span> 2: A Generalised
+<em><span>NICE DSU Technical Support Document</span> 2: A Generalised
 Linear Modelling Framework for Pair-Wise and Network Meta-Analysis of
-Randomised Controlled Trials.”</span> <span>National Institute for
-Health and Care Excellence</span>. <a href="https://www.sheffield.ac.uk/nice-dsu" class="external-link">https://www.sheffield.ac.uk/nice-dsu</a>.
+Randomised Controlled Trials</em>. <span>National Institute for Health
+and Care Excellence</span>. <a href="https://sheffield.ac.uk/nice-dsu" class="external-link">https://sheffield.ac.uk/nice-dsu</a>.
 </div>
 </div>
 </div>

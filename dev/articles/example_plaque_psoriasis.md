@@ -1,6 +1,7 @@
 # Example: Plaque psoriasis ML-NMR
 
 ``` r
+
 library(multinma)
 #> For execution on a local, multicore CPU with excess RAM we recommend calling
 #> options(mc.cores = parallel::detectCores())
@@ -23,6 +24,7 @@ library(ggplot2)    # ggplot2 for plotting covariate distributions
 ```
 
 ``` r
+
 options(mc.cores = parallel::detectCores())
 ```
 
@@ -57,6 +59,7 @@ UNCOVER-1, UNCOVER-2, and UNCOVER-3 ([Griffiths et al.
 AgD from one study, FIXTURE ([Langley et al. 2014](#ref-Langley2014)).
 
 ``` r
+
 pso_ipd <- filter(plaque_psoriasis_ipd,
                   studyc %in% c("UNCOVER-1", "UNCOVER-2", "UNCOVER-3"))
 
@@ -121,6 +124,7 @@ treatments belong to which classes. Finally, we check for missing values
 in the IPD.
 
 ``` r
+
 pso_ipd <- pso_ipd %>% 
   mutate(# Variable transformations
          bsa = bsa / 100,
@@ -157,6 +161,7 @@ pso_agd <- pso_agd %>%
 A small number of individuals have missing covariates:
 
 ``` r
+
 sum(!pso_ipd$complete)
 #> [1] 4
 mean(!pso_ipd$complete)
@@ -167,6 +172,7 @@ Since the proportion of missing data is so small, we will simply exclude
 these individuals from the analysis.
 
 ``` r
+
 pso_ipd <- filter(pso_ipd, complete)
 ```
 
@@ -183,6 +189,7 @@ outcome `pasi75_r` and denominator `pasi75_n` as `r` and `n` in the AgD.
 We specify the treatment classes with `trt_class = trtclass`.
 
 ``` r
+
 pso_net <- combine_network(
   set_ipd(pso_ipd, 
           study = studyc, 
@@ -223,6 +230,7 @@ We can produce a network plot with the
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) method:
 
 ``` r
+
 plot(pso_net, weight_nodes = TRUE, weight_edges = TRUE, show_trt_class = TRUE) + 
   ggplot2::theme(legend.position = "bottom", legend.box = "vertical")
 ```
@@ -246,9 +254,9 @@ copula ([Phillippo et al. 2020](#ref-methods_paper); [Phillippo
 2019](#ref-Phillippo_thesis)). QMC integration is a very general and
 flexible integration approach, which typically requires far fewer
 integration points than standard (pseudo-random) Monte-Carlo integration
-to achieve the same numerical accuracy.[¹](#fn1) A Gaussian copula
-allows us to account for correlations between covariates, which may have
-any specified marginal distributions.
+to achieve the same numerical accuracy.[^1] A Gaussian copula allows us
+to account for correlations between covariates, which may have any
+specified marginal distributions.
 
 We now set up the numerical integration for the network. The five
 covariates that we will consider adjusting for are body surface area
@@ -262,6 +270,7 @@ choose a logit-Normal distribution. We choose Gamma distributions for
 match well the marginal distributions observed in the IPD:
 
 ``` r
+
 # Get mean and sd of covariates in each study
 ipd_summary <- pso_ipd %>% 
   group_by(studyc) %>% 
@@ -311,6 +320,7 @@ the weighted mean of the correlations in the IPD studies (the default
 option).
 
 ``` r
+
 pso_net <- add_integration(pso_net,
   durnpso = distr(qgamma, mean = durnpso_mean, sd = durnpso_sd),
   prevsys = distr(qbern, prob = prevsys),
@@ -347,6 +357,7 @@ parameter values implied by these prior distributions can be checked
 using the [`summary()`](https://rdrr.io/r/base/summary.html) method:
 
 ``` r
+
 summary(normal(scale = 10))
 #> A Normal prior distribution: location = 0, scale = 10.
 #> 50% of the prior density lies between -6.74 and 6.74.
@@ -372,6 +383,7 @@ the QR decomposition (`QR = TRUE`) greatly improves sampling efficiency
 here, as is often the case for regression models.
 
 ``` r
+
 pso_fit_FE <- nma(pso_net, 
                   trt_effects = "fixed",
                   link = "probit", 
@@ -390,6 +402,7 @@ Basic parameter summaries are given by the
 [`print()`](https://rdrr.io/r/base/print.html) method:
 
 ``` r
+
 print(pso_fit_FE)
 #> A fixed effects ML-NMR with a bernoulli2 likelihood (probit link).
 #> Regression model: ~(durnpso + prevsys + bsa + weight + psa) * .trt.
@@ -401,51 +414,51 @@ print(pso_fit_FE)
 #> post-warmup draws per chain=1000, total post-warmup draws=4000.
 #> 
 #>                                         mean se_mean   sd     2.5%      25%      50%      75%
-#> beta[durnpso]                           0.04    0.00 0.06    -0.08     0.00     0.04     0.09
-#> beta[prevsys]                          -0.14    0.00 0.16    -0.45    -0.25    -0.14    -0.03
-#> beta[bsa]                              -0.07    0.01 0.43    -0.96    -0.36    -0.06     0.22
+#> beta[durnpso]                           0.04    0.00 0.06    -0.08     0.00     0.04     0.08
+#> beta[prevsys]                          -0.14    0.00 0.16    -0.44    -0.25    -0.14    -0.03
+#> beta[bsa]                              -0.07    0.01 0.43    -0.97    -0.35    -0.05     0.22
 #> beta[weight]                            0.04    0.00 0.03    -0.02     0.02     0.04     0.06
 #> beta[psa]                              -0.08    0.00 0.17    -0.41    -0.19    -0.08     0.04
-#> beta[durnpso:.trtclassTNFa blocker]    -0.03    0.00 0.07    -0.17    -0.08    -0.03     0.02
+#> beta[durnpso:.trtclassTNFa blocker]    -0.03    0.00 0.07    -0.18    -0.08    -0.03     0.02
 #> beta[durnpso:.trtclassIL blocker]      -0.01    0.00 0.07    -0.14    -0.06    -0.01     0.03
-#> beta[prevsys:.trtclassTNFa blocker]     0.19    0.00 0.19    -0.19     0.07     0.19     0.32
-#> beta[prevsys:.trtclassIL blocker]       0.07    0.00 0.18    -0.28    -0.05     0.07     0.19
-#> beta[bsa:.trtclassTNFa blocker]         0.06    0.01 0.51    -0.93    -0.29     0.06     0.40
-#> beta[bsa:.trtclassIL blocker]           0.29    0.01 0.47    -0.61    -0.03     0.29     0.60
-#> beta[weight:.trtclassTNFa blocker]     -0.17    0.00 0.03    -0.23    -0.19    -0.17    -0.14
+#> beta[prevsys:.trtclassTNFa blocker]     0.19    0.00 0.19    -0.17     0.07     0.19     0.31
+#> beta[prevsys:.trtclassIL blocker]       0.07    0.00 0.17    -0.28    -0.05     0.07     0.19
+#> beta[bsa:.trtclassTNFa blocker]         0.06    0.01 0.51    -0.92    -0.28     0.04     0.38
+#> beta[bsa:.trtclassIL blocker]           0.29    0.01 0.47    -0.59    -0.03     0.27     0.59
+#> beta[weight:.trtclassTNFa blocker]     -0.17    0.00 0.04    -0.24    -0.19    -0.17    -0.14
 #> beta[weight:.trtclassIL blocker]       -0.10    0.00 0.03    -0.16    -0.12    -0.10    -0.08
-#> beta[psa:.trtclassTNFa blocker]        -0.05    0.00 0.21    -0.45    -0.20    -0.05     0.09
+#> beta[psa:.trtclassTNFa blocker]        -0.05    0.00 0.21    -0.46    -0.19    -0.06     0.09
 #> beta[psa:.trtclassIL blocker]           0.01    0.00 0.19    -0.35    -0.12     0.01     0.13
 #> d[ETN]                                  1.55    0.00 0.08     1.40     1.50     1.55     1.60
-#> d[IXE_Q2W]                              2.95    0.00 0.08     2.79     2.90     2.95     3.01
+#> d[IXE_Q2W]                              2.95    0.00 0.09     2.79     2.90     2.95     3.01
 #> d[IXE_Q4W]                              2.54    0.00 0.08     2.39     2.49     2.54     2.59
-#> d[SEC_150]                              2.14    0.00 0.11     1.93     2.07     2.14     2.22
-#> d[SEC_300]                              2.45    0.00 0.12     2.21     2.37     2.45     2.53
-#> lp__                                -1576.24    0.09 3.49 -1583.86 -1578.38 -1575.86 -1573.72
+#> d[SEC_150]                              2.15    0.00 0.12     1.91     2.07     2.14     2.22
+#> d[SEC_300]                              2.45    0.00 0.12     2.22     2.37     2.45     2.53
+#> lp__                                -1576.26    0.08 3.46 -1583.65 -1578.39 -1575.98 -1573.73
 #>                                        97.5% n_eff Rhat
-#> beta[durnpso]                           0.16  5944    1
-#> beta[prevsys]                           0.18  5534    1
-#> beta[bsa]                               0.76  5421    1
-#> beta[weight]                            0.10  5813    1
-#> beta[psa]                               0.24  5371    1
-#> beta[durnpso:.trtclassTNFa blocker]     0.12  6617    1
-#> beta[durnpso:.trtclassIL blocker]       0.12  7077    1
-#> beta[prevsys:.trtclassTNFa blocker]     0.57  6392    1
-#> beta[prevsys:.trtclassIL blocker]       0.41  7013    1
-#> beta[bsa:.trtclassTNFa blocker]         1.14  5963    1
-#> beta[bsa:.trtclassIL blocker]           1.26  6312    1
-#> beta[weight:.trtclassTNFa blocker]     -0.10  5568    1
-#> beta[weight:.trtclassIL blocker]       -0.04  7081    1
-#> beta[psa:.trtclassTNFa blocker]         0.36  6328    1
-#> beta[psa:.trtclassIL blocker]           0.37  6437    1
-#> d[ETN]                                  1.70  3945    1
-#> d[IXE_Q2W]                              3.12  4971    1
-#> d[IXE_Q4W]                              2.70  5335    1
-#> d[SEC_150]                              2.37  4332    1
-#> d[SEC_300]                              2.68  5409    1
-#> lp__                                -1570.52  1587    1
+#> beta[durnpso]                           0.17  5481    1
+#> beta[prevsys]                           0.18  6154    1
+#> beta[bsa]                               0.75  5777    1
+#> beta[weight]                            0.09  5148    1
+#> beta[psa]                               0.24  5779    1
+#> beta[durnpso:.trtclassTNFa blocker]     0.12  6062    1
+#> beta[durnpso:.trtclassIL blocker]       0.12  6198    1
+#> beta[prevsys:.trtclassTNFa blocker]     0.55  6930    1
+#> beta[prevsys:.trtclassIL blocker]       0.41  6911    1
+#> beta[bsa:.trtclassTNFa blocker]         1.10  5838    1
+#> beta[bsa:.trtclassIL blocker]           1.26  7041    1
+#> beta[weight:.trtclassTNFa blocker]     -0.10  4989    1
+#> beta[weight:.trtclassIL blocker]       -0.04  6290    1
+#> beta[psa:.trtclassTNFa blocker]         0.35  5683    1
+#> beta[psa:.trtclassIL blocker]           0.39  6829    1
+#> d[ETN]                                  1.71  4920    1
+#> d[IXE_Q2W]                              3.13  5359    1
+#> d[IXE_Q4W]                              2.70  5995    1
+#> d[SEC_150]                              2.38  5729    1
+#> d[SEC_300]                              2.68  6502    1
+#> lp__                                -1570.45  1745    1
 #> 
-#> Samples were drawn using NUTS(diag_e) at Thu Dec  4 16:18:17 2025.
+#> Samples were drawn using NUTS(diag_e) at Fri Jul  3 13:22:11 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -455,6 +468,7 @@ By default, summaries of the study-specific intercepts \mu_j are hidden,
 but could be examined by changing the `pars` argument:
 
 ``` r
+
 # Not run
 print(pso_fit_FE, pars = c("d", "beta", "mu"))
 ```
@@ -464,6 +478,7 @@ The prior and posterior distributions can be compared visually using the
 function:
 
 ``` r
+
 plot_prior_posterior(pso_fit_FE, prior = c("intercept", "trt", "reg"))
 ```
 
@@ -501,6 +516,7 @@ parameter values implied by these prior distributions can be checked
 using the [`summary()`](https://rdrr.io/r/base/summary.html) method:
 
 ``` r
+
 summary(normal(scale = 10))
 #> A Normal prior distribution: location = 0, scale = 10.
 #> 50% of the prior density lies between -6.74 and 6.74.
@@ -516,6 +532,7 @@ Fitting the model uses the same call to
 as before, except now with `trt_effects = "random"`.
 
 ``` r
+
 pso_fit_RE <- nma(pso_net, 
                   trt_effects = "random",
                   link = "probit", 
@@ -529,7 +546,7 @@ pso_fit_RE <- nma(pso_net,
                   init_r = 0.1,
                   QR = TRUE)
 #> Note: Setting "PBO" as the network reference treatment.
-#> Warning: There were 9 divergent transitions after warmup. See
+#> Warning: There were 6 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
 #> to find out why this is a problem and how to eliminate them.
 #> Warning: Examine the pairs() plot to diagnose sampling problems
@@ -539,6 +556,7 @@ Basic parameter summaries are given by the
 [`print()`](https://rdrr.io/r/base/print.html) method:
 
 ``` r
+
 print(pso_fit_RE)
 #> A random effects ML-NMR with a bernoulli2 likelihood (probit link).
 #> Regression model: ~(durnpso + prevsys + bsa + weight + psa) * .trt.
@@ -550,53 +568,53 @@ print(pso_fit_RE)
 #> post-warmup draws per chain=1000, total post-warmup draws=4000.
 #> 
 #>                                         mean se_mean   sd     2.5%      25%      50%      75%
-#> beta[durnpso]                           0.05    0.00 0.06    -0.08     0.01     0.05     0.09
-#> beta[prevsys]                          -0.13    0.00 0.16    -0.45    -0.24    -0.13    -0.03
-#> beta[bsa]                              -0.10    0.01 0.45    -1.01    -0.41    -0.09     0.21
-#> beta[weight]                            0.04    0.00 0.03    -0.02     0.02     0.04     0.06
+#> beta[durnpso]                           0.05    0.00 0.06    -0.07     0.01     0.05     0.09
+#> beta[prevsys]                          -0.13    0.00 0.16    -0.44    -0.23    -0.13    -0.02
+#> beta[bsa]                              -0.11    0.01 0.44    -1.00    -0.41    -0.10     0.18
+#> beta[weight]                            0.04    0.00 0.03    -0.01     0.03     0.04     0.06
 #> beta[psa]                              -0.06    0.00 0.17    -0.40    -0.17    -0.06     0.05
-#> beta[durnpso:.trtclassTNFa blocker]    -0.03    0.00 0.08    -0.18    -0.08    -0.03     0.02
-#> beta[durnpso:.trtclassIL blocker]      -0.02    0.00 0.07    -0.15    -0.06    -0.02     0.03
-#> beta[prevsys:.trtclassTNFa blocker]     0.19    0.00 0.19    -0.20     0.07     0.19     0.32
-#> beta[prevsys:.trtclassIL blocker]       0.06    0.00 0.18    -0.30    -0.06     0.05     0.18
-#> beta[bsa:.trtclassTNFa blocker]         0.08    0.01 0.54    -0.97    -0.27     0.08     0.45
-#> beta[bsa:.trtclassIL blocker]           0.33    0.01 0.49    -0.62    -0.01     0.32     0.66
+#> beta[durnpso:.trtclassTNFa blocker]    -0.03    0.00 0.07    -0.17    -0.08    -0.03     0.02
+#> beta[durnpso:.trtclassIL blocker]      -0.01    0.00 0.07    -0.15    -0.06    -0.01     0.03
+#> beta[prevsys:.trtclassTNFa blocker]     0.18    0.00 0.19    -0.18     0.06     0.18     0.31
+#> beta[prevsys:.trtclassIL blocker]       0.05    0.00 0.18    -0.30    -0.06     0.05     0.17
+#> beta[bsa:.trtclassTNFa blocker]         0.10    0.01 0.52    -0.93    -0.25     0.09     0.42
+#> beta[bsa:.trtclassIL blocker]           0.35    0.01 0.49    -0.61     0.02     0.34     0.67
 #> beta[weight:.trtclassTNFa blocker]     -0.17    0.00 0.04    -0.24    -0.20    -0.17    -0.15
 #> beta[weight:.trtclassIL blocker]       -0.10    0.00 0.03    -0.17    -0.13    -0.10    -0.08
-#> beta[psa:.trtclassTNFa blocker]        -0.07    0.00 0.21    -0.47    -0.21    -0.07     0.07
-#> beta[psa:.trtclassIL blocker]          -0.01    0.00 0.18    -0.37    -0.14    -0.01     0.12
-#> d[ETN]                                  1.56    0.00 0.16     1.24     1.48     1.56     1.64
-#> d[IXE_Q2W]                              2.97    0.01 0.18     2.65     2.88     2.97     3.06
-#> d[IXE_Q4W]                              2.56    0.00 0.16     2.25     2.47     2.56     2.65
-#> d[SEC_150]                              2.13    0.01 0.25     1.62     2.00     2.13     2.26
-#> d[SEC_300]                              2.43    0.01 0.25     1.91     2.30     2.43     2.57
-#> lp__                                -1580.48    0.19 5.07 -1591.30 -1583.66 -1580.16 -1576.98
-#> tau                                     0.19    0.01 0.14     0.01     0.10     0.17     0.25
+#> beta[psa:.trtclassTNFa blocker]        -0.07    0.00 0.20    -0.46    -0.20    -0.07     0.06
+#> beta[psa:.trtclassIL blocker]          -0.01    0.00 0.19    -0.37    -0.13    -0.01     0.12
+#> d[ETN]                                  1.55    0.00 0.14     1.26     1.47     1.55     1.64
+#> d[IXE_Q2W]                              2.98    0.00 0.15     2.69     2.89     2.97     3.06
+#> d[IXE_Q4W]                              2.56    0.00 0.14     2.28     2.48     2.56     2.65
+#> d[SEC_150]                              2.12    0.01 0.22     1.64     1.99     2.12     2.25
+#> d[SEC_300]                              2.42    0.00 0.22     1.96     2.29     2.43     2.55
+#> lp__                                -1580.38    0.15 4.86 -1590.84 -1583.55 -1579.99 -1576.86
+#> tau                                     0.18    0.00 0.11     0.01     0.10     0.16     0.24
 #>                                        97.5% n_eff Rhat
-#> beta[durnpso]                           0.17  4963 1.00
-#> beta[prevsys]                           0.19  4487 1.00
-#> beta[bsa]                               0.75  4300 1.00
-#> beta[weight]                            0.10  4531 1.00
-#> beta[psa]                               0.26  5026 1.00
-#> beta[durnpso:.trtclassTNFa blocker]     0.12  5384 1.00
-#> beta[durnpso:.trtclassIL blocker]       0.12  5436 1.00
-#> beta[prevsys:.trtclassTNFa blocker]     0.56  4467 1.00
-#> beta[prevsys:.trtclassIL blocker]       0.40  5121 1.00
-#> beta[bsa:.trtclassTNFa blocker]         1.17  4556 1.00
-#> beta[bsa:.trtclassIL blocker]           1.31  5015 1.00
-#> beta[weight:.trtclassTNFa blocker]     -0.10  4683 1.00
-#> beta[weight:.trtclassIL blocker]       -0.04  4919 1.00
-#> beta[psa:.trtclassTNFa blocker]         0.34  5183 1.00
-#> beta[psa:.trtclassIL blocker]           0.36  6108 1.00
-#> d[ETN]                                  1.88  1230 1.00
-#> d[IXE_Q2W]                              3.32   667 1.00
-#> d[IXE_Q4W]                              2.90  1004 1.00
-#> d[SEC_150]                              2.62  1398 1.00
-#> d[SEC_300]                              2.93  1723 1.00
-#> lp__                                -1571.53   750 1.01
-#> tau                                     0.56   451 1.01
+#> beta[durnpso]                           0.17  4020 1.00
+#> beta[prevsys]                           0.19  3907 1.00
+#> beta[bsa]                               0.77  3637 1.00
+#> beta[weight]                            0.10  3630 1.00
+#> beta[psa]                               0.25  3306 1.00
+#> beta[durnpso:.trtclassTNFa blocker]     0.11  4154 1.00
+#> beta[durnpso:.trtclassIL blocker]       0.12  4486 1.00
+#> beta[prevsys:.trtclassTNFa blocker]     0.55  4048 1.00
+#> beta[prevsys:.trtclassIL blocker]       0.40  4881 1.00
+#> beta[bsa:.trtclassTNFa blocker]         1.14  3997 1.00
+#> beta[bsa:.trtclassIL blocker]           1.34  4433 1.00
+#> beta[weight:.trtclassTNFa blocker]     -0.10  3680 1.00
+#> beta[weight:.trtclassIL blocker]       -0.04  4403 1.00
+#> beta[psa:.trtclassTNFa blocker]         0.34  4076 1.00
+#> beta[psa:.trtclassIL blocker]           0.37  4221 1.00
+#> d[ETN]                                  1.85  2066 1.00
+#> d[IXE_Q2W]                              3.29  1624 1.00
+#> d[IXE_Q4W]                              2.87  1643 1.00
+#> d[SEC_150]                              2.54  1792 1.00
+#> d[SEC_300]                              2.84  2141 1.00
+#> lp__                                -1572.12   984 1.00
+#> tau                                     0.46   619 1.01
 #> 
-#> Samples were drawn using NUTS(diag_e) at Thu Dec  4 16:21:16 2025.
+#> Samples were drawn using NUTS(diag_e) at Fri Jul  3 13:24:19 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -607,6 +625,7 @@ study-specific relative effects \delta\_{jk} are hidden, but could be
 examined by changing the `pars` argument:
 
 ``` r
+
 # Not run
 print(pso_fit_RE, pars = c("d", "beta", "tau", "mu", "delta"))
 ```
@@ -615,6 +634,7 @@ There are a number of divergent transitions, which we can investigate
 using the [`pairs()`](https://rdrr.io/r/graphics/pairs.html) method:
 
 ``` r
+
 pairs(pso_fit_RE, pars = c("delta[UNCOVER-2: ETN]", "d[ETN]", "tau", "lp__"))
 ```
 
@@ -631,6 +651,7 @@ The prior and posterior distributions can be compared visually using the
 function:
 
 ``` r
+
 plot_prior_posterior(pso_fit_RE, prior = c("intercept", "trt", "reg", "het"))
 ```
 
@@ -643,14 +664,15 @@ The model fit under the FE and RE models can be checked using the
 function.
 
 ``` r
+
 (pso_dic_FE <- dic(pso_fit_FE))
 #> Residual deviance: 3129.3 (on 3858 data points)
 #>                pD: 24
 #>               DIC: 3153.3
 (pso_dic_RE <- dic(pso_fit_RE))
-#> Residual deviance: 3123.9 (on 3858 data points)
-#>                pD: 28.6
-#>               DIC: 3152.5
+#> Residual deviance: 3123.7 (on 3858 data points)
+#>                pD: 28.2
+#>               DIC: 3151.9
 ```
 
 The DIC is similar between the FE and RE models, suggesting that there
@@ -663,6 +685,7 @@ Parameter estimates can be plotted using the
 example to examine the estimated regression coefficients:
 
 ``` r
+
 plot(pso_fit_FE,
      pars = "beta",
      stat = "halfeye",
@@ -685,6 +708,7 @@ population in the network using the
 function.
 
 ``` r
+
 (pso_releff_FE <- relative_effects(pso_fit_FE))
 #> ---------------------------------------------------------------- Study: FIXTURE ---- 
 #> 
@@ -693,11 +717,11 @@ function.
 #>      1.6    0.62 0.34   8.34 0.14
 #> 
 #>                     mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> d[FIXTURE: ETN]     1.66 0.09 1.48 1.60 1.66 1.72  1.84     4070     3297    1
-#> d[FIXTURE: IXE_Q2W] 3.03 0.10 2.84 2.96 3.02 3.09  3.23     5048     3249    1
-#> d[FIXTURE: IXE_Q4W] 2.61 0.09 2.44 2.55 2.61 2.68  2.80     5559     3386    1
-#> d[FIXTURE: SEC_150] 2.22 0.12 2.00 2.14 2.22 2.30  2.45     4156     3113    1
-#> d[FIXTURE: SEC_300] 2.52 0.12 2.29 2.44 2.52 2.60  2.75     5032     3359    1
+#> d[FIXTURE: ETN]     1.66 0.09 1.49 1.60 1.66 1.72  1.84     4580     3480    1
+#> d[FIXTURE: IXE_Q2W] 3.03 0.10 2.83 2.96 3.03 3.09  3.23     5427     3478    1
+#> d[FIXTURE: IXE_Q4W] 2.61 0.09 2.44 2.55 2.61 2.68  2.80     5764     3447    1
+#> d[FIXTURE: SEC_150] 2.22 0.12 1.99 2.14 2.22 2.30  2.46     5362     3249    1
+#> d[FIXTURE: SEC_300] 2.52 0.12 2.28 2.44 2.52 2.61  2.77     6134     3560    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-1 ---- 
 #> 
@@ -706,11 +730,11 @@ function.
 #>        2    0.73 0.28   9.24 0.28
 #> 
 #>                       mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> d[UNCOVER-1: ETN]     1.51 0.08 1.34 1.45 1.51 1.56  1.67     4143     3294    1
-#> d[UNCOVER-1: IXE_Q2W] 2.92 0.08 2.76 2.87 2.92 2.98  3.09     4906     3329    1
-#> d[UNCOVER-1: IXE_Q4W] 2.51 0.08 2.35 2.46 2.51 2.56  2.67     5274     3241    1
-#> d[UNCOVER-1: SEC_150] 2.11 0.12 1.89 2.03 2.11 2.19  2.35     4576     3051    1
-#> d[UNCOVER-1: SEC_300] 2.42 0.12 2.18 2.34 2.42 2.50  2.66     5437     3176    1
+#> d[UNCOVER-1: ETN]     1.51 0.08 1.35 1.45 1.51 1.56  1.68     5138     3697    1
+#> d[UNCOVER-1: IXE_Q2W] 2.92 0.09 2.76 2.87 2.93 2.98  3.09     5368     3270    1
+#> d[UNCOVER-1: IXE_Q4W] 2.51 0.08 2.36 2.46 2.51 2.57  2.67     5801     3552    1
+#> d[UNCOVER-1: SEC_150] 2.11 0.12 1.88 2.03 2.11 2.19  2.37     5935     3399    1
+#> d[UNCOVER-1: SEC_300] 2.42 0.12 2.18 2.34 2.42 2.50  2.66     6717     3451    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-2 ---- 
 #> 
@@ -719,11 +743,11 @@ function.
 #>     1.87    0.64 0.27   9.17 0.24
 #> 
 #>                       mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> d[UNCOVER-2: ETN]     1.51 0.08 1.35 1.45 1.51 1.56  1.66     4072     3390    1
-#> d[UNCOVER-2: IXE_Q2W] 2.92 0.08 2.76 2.87 2.92 2.97  3.09     5176     3221    1
-#> d[UNCOVER-2: IXE_Q4W] 2.51 0.08 2.36 2.46 2.51 2.56  2.67     5460     3271    1
-#> d[UNCOVER-2: SEC_150] 2.11 0.12 1.90 2.03 2.11 2.19  2.35     4504     2948    1
-#> d[UNCOVER-2: SEC_300] 2.42 0.12 2.18 2.33 2.42 2.50  2.65     5521     3273    1
+#> d[UNCOVER-2: ETN]     1.51 0.08 1.35 1.45 1.51 1.56  1.67     5091     3599    1
+#> d[UNCOVER-2: IXE_Q2W] 2.92 0.09 2.75 2.87 2.92 2.98  3.09     5561     2965    1
+#> d[UNCOVER-2: IXE_Q4W] 2.51 0.08 2.36 2.46 2.51 2.56  2.67     6154     3548    1
+#> d[UNCOVER-2: SEC_150] 2.11 0.12 1.88 2.03 2.11 2.19  2.36     5982     3175    1
+#> d[UNCOVER-2: SEC_300] 2.42 0.12 2.19 2.34 2.42 2.50  2.66     6655     3436    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-3 ---- 
 #> 
@@ -732,11 +756,11 @@ function.
 #>     1.78    0.59 0.28   9.01 0.2
 #> 
 #>                       mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> d[UNCOVER-3: ETN]     1.53 0.08 1.38 1.48 1.53 1.58  1.68     4103     3486    1
-#> d[UNCOVER-3: IXE_Q2W] 2.94 0.08 2.78 2.88 2.94 2.99  3.11     5317     3304    1
-#> d[UNCOVER-3: IXE_Q4W] 2.53 0.08 2.37 2.47 2.53 2.58  2.69     5723     3160    1
-#> d[UNCOVER-3: SEC_150] 2.13 0.11 1.92 2.05 2.13 2.21  2.36     4450     3053    1
-#> d[UNCOVER-3: SEC_300] 2.43 0.12 2.20 2.35 2.44 2.52  2.66     5482     2972    1
+#> d[UNCOVER-3: ETN]     1.53 0.08 1.38 1.48 1.53 1.58  1.69     5099     3669    1
+#> d[UNCOVER-3: IXE_Q2W] 2.94 0.09 2.77 2.88 2.94 3.00  3.11     5728     3140    1
+#> d[UNCOVER-3: IXE_Q4W] 2.53 0.08 2.37 2.48 2.53 2.58  2.68     6312     3639    1
+#> d[UNCOVER-3: SEC_150] 2.13 0.12 1.90 2.05 2.13 2.21  2.37     5916     3225    1
+#> d[UNCOVER-3: SEC_300] 2.44 0.12 2.20 2.36 2.44 2.52  2.67     6476     3458    1
 plot(pso_releff_FE, ref_line = 0)
 ```
 
@@ -749,46 +773,47 @@ each treatment are produced using the
 rather than probit probabilities.
 
 ``` r
+
 (pso_pred_FE <- predict(pso_fit_FE, type = "response"))
 #> ---------------------------------------------------------------- Study: FIXTURE ---- 
 #> 
 #>                        mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> pred[FIXTURE: PBO]     0.04 0.01 0.03 0.04 0.04 0.05  0.06     3867     3009    1
-#> pred[FIXTURE: ETN]     0.46 0.03 0.41 0.44 0.46 0.47  0.51     7616     3443    1
-#> pred[FIXTURE: IXE_Q2W] 0.89 0.02 0.85 0.88 0.89 0.90  0.92     6373     2972    1
-#> pred[FIXTURE: IXE_Q4W] 0.80 0.03 0.74 0.78 0.80 0.81  0.84     6662     3234    1
-#> pred[FIXTURE: SEC_150] 0.67 0.03 0.62 0.65 0.67 0.69  0.72     8460     2895    1
-#> pred[FIXTURE: SEC_300] 0.77 0.02 0.72 0.75 0.77 0.79  0.81     9279     3033    1
+#> pred[FIXTURE: PBO]     0.04 0.01 0.03 0.04 0.04 0.05  0.06     4829     3288    1
+#> pred[FIXTURE: ETN]     0.46 0.02 0.41 0.44 0.46 0.47  0.51     8192     3363    1
+#> pred[FIXTURE: IXE_Q2W] 0.89 0.02 0.85 0.88 0.89 0.90  0.92     6884     2780    1
+#> pred[FIXTURE: IXE_Q4W] 0.80 0.03 0.74 0.78 0.80 0.81  0.84     7691     3132    1
+#> pred[FIXTURE: SEC_150] 0.67 0.03 0.62 0.65 0.67 0.69  0.72     9046     3068    1
+#> pred[FIXTURE: SEC_300] 0.77 0.02 0.72 0.75 0.77 0.79  0.81    10364     3111    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-1 ---- 
 #> 
 #>                          mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> pred[UNCOVER-1: PBO]     0.06 0.01 0.04 0.05 0.06 0.06  0.07     6049     3159    1
-#> pred[UNCOVER-1: ETN]     0.46 0.03 0.41 0.44 0.46 0.48  0.52     6897     3584    1
-#> pred[UNCOVER-1: IXE_Q2W] 0.90 0.01 0.88 0.89 0.90 0.91  0.92     8554     3263    1
-#> pred[UNCOVER-1: IXE_Q4W] 0.81 0.02 0.78 0.80 0.81 0.82  0.84     7768     2789    1
-#> pred[UNCOVER-1: SEC_150] 0.69 0.04 0.60 0.66 0.69 0.72  0.77     6251     2707    1
-#> pred[UNCOVER-1: SEC_300] 0.78 0.04 0.71 0.76 0.79 0.81  0.85     7507     3535    1
+#> pred[UNCOVER-1: PBO]     0.06 0.01 0.04 0.05 0.06 0.06  0.07     6031     3565    1
+#> pred[UNCOVER-1: ETN]     0.46 0.03 0.41 0.44 0.46 0.48  0.52     7495     2977    1
+#> pred[UNCOVER-1: IXE_Q2W] 0.90 0.01 0.88 0.89 0.90 0.91  0.92     8117     3037    1
+#> pred[UNCOVER-1: IXE_Q4W] 0.81 0.01 0.78 0.80 0.81 0.82  0.84     9219     3098    1
+#> pred[UNCOVER-1: SEC_150] 0.69 0.04 0.60 0.66 0.69 0.72  0.77     8552     3049    1
+#> pred[UNCOVER-1: SEC_300] 0.78 0.04 0.71 0.76 0.79 0.81  0.85     8069     3229    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-2 ---- 
 #> 
 #>                          mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> pred[UNCOVER-2: PBO]     0.05 0.01 0.03 0.04 0.05 0.05  0.06     4945     3203    1
-#> pred[UNCOVER-2: ETN]     0.42 0.02 0.38 0.41 0.42 0.43  0.46     7531     2853    1
-#> pred[UNCOVER-2: IXE_Q2W] 0.88 0.01 0.86 0.87 0.88 0.89  0.90     6530     3404    1
-#> pred[UNCOVER-2: IXE_Q4W] 0.78 0.02 0.75 0.77 0.78 0.79  0.81     9109     3509    1
-#> pred[UNCOVER-2: SEC_150] 0.65 0.04 0.57 0.62 0.65 0.68  0.73     6678     3048    1
-#> pred[UNCOVER-2: SEC_300] 0.75 0.04 0.68 0.73 0.75 0.78  0.82     7866     3626    1
+#> pred[UNCOVER-2: PBO]     0.05 0.01 0.03 0.04 0.05 0.05  0.06     6180     3792    1
+#> pred[UNCOVER-2: ETN]     0.42 0.02 0.38 0.41 0.42 0.43  0.46     8335     2981    1
+#> pred[UNCOVER-2: IXE_Q2W] 0.88 0.01 0.86 0.87 0.88 0.89  0.90     6812     3289    1
+#> pred[UNCOVER-2: IXE_Q4W] 0.78 0.02 0.75 0.77 0.78 0.79  0.81     8317     3252    1
+#> pred[UNCOVER-2: SEC_150] 0.65 0.04 0.56 0.62 0.65 0.68  0.73     9461     3201    1
+#> pred[UNCOVER-2: SEC_300] 0.75 0.04 0.68 0.73 0.75 0.78  0.82     8899     3354    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-3 ---- 
 #> 
 #>                          mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> pred[UNCOVER-3: PBO]     0.08 0.01 0.06 0.07 0.08 0.08  0.10     5582     3343    1
-#> pred[UNCOVER-3: ETN]     0.53 0.02 0.49 0.51 0.53 0.54  0.57     9008     2520    1
-#> pred[UNCOVER-3: IXE_Q2W] 0.93 0.01 0.91 0.92 0.93 0.93  0.94     7138     3208    1
-#> pred[UNCOVER-3: IXE_Q4W] 0.85 0.01 0.83 0.85 0.85 0.86  0.88     7100     3381    1
-#> pred[UNCOVER-3: SEC_150] 0.75 0.04 0.68 0.72 0.75 0.77  0.81     6487     3104    1
-#> pred[UNCOVER-3: SEC_300] 0.83 0.03 0.77 0.81 0.83 0.85  0.88     8466     3262    1
+#> pred[UNCOVER-3: PBO]     0.08 0.01 0.06 0.07 0.08 0.08  0.10     6515     3433    1
+#> pred[UNCOVER-3: ETN]     0.53 0.02 0.49 0.51 0.53 0.54  0.57     8336     3522    1
+#> pred[UNCOVER-3: IXE_Q2W] 0.93 0.01 0.91 0.92 0.93 0.93  0.94     6795     2623    1
+#> pred[UNCOVER-3: IXE_Q4W] 0.85 0.01 0.83 0.85 0.85 0.86  0.88     8459     2508    1
+#> pred[UNCOVER-3: SEC_150] 0.75 0.04 0.67 0.72 0.75 0.77  0.81     9169     3098    1
+#> pred[UNCOVER-3: SEC_300] 0.83 0.03 0.77 0.81 0.83 0.85  0.88     8736     3445    1
 plot(pso_pred_FE, ref_line = c(0, 1))
 ```
 
@@ -805,6 +830,7 @@ the distributions of effect modifiers are similar). We specify
 of achieving PASI 75).
 
 ``` r
+
 (pso_ranks_FE <- posterior_ranks(pso_fit_FE, lower_better = FALSE))
 #> ---------------------------------------------------------------- Study: FIXTURE ---- 
 #> 
@@ -816,9 +842,9 @@ of achieving PASI 75).
 #> rank[FIXTURE: PBO]     6.00 0.00    6   6   6   6     6       NA       NA   NA
 #> rank[FIXTURE: ETN]     5.00 0.00    5   5   5   5     5       NA       NA   NA
 #> rank[FIXTURE: IXE_Q2W] 1.00 0.00    1   1   1   1     1       NA       NA   NA
-#> rank[FIXTURE: IXE_Q4W] 2.23 0.42    2   2   2   2     3     4130     4019    1
-#> rank[FIXTURE: SEC_150] 4.00 0.05    4   4   4   4     4     2430       NA    1
-#> rank[FIXTURE: SEC_300] 2.77 0.42    2   3   3   3     3     4058     2017    1
+#> rank[FIXTURE: IXE_Q4W] 2.23 0.42    2   2   2   2     3     5019     4016    1
+#> rank[FIXTURE: SEC_150] 4.00 0.05    4   4   4   4     4     4034       NA    1
+#> rank[FIXTURE: SEC_300] 2.77 0.42    2   3   3   3     3     4985     4031    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-1 ---- 
 #> 
@@ -830,9 +856,9 @@ of achieving PASI 75).
 #> rank[UNCOVER-1: PBO]     6.00 0.00    6   6   6   6     6       NA       NA   NA
 #> rank[UNCOVER-1: ETN]     5.00 0.00    5   5   5   5     5       NA       NA   NA
 #> rank[UNCOVER-1: IXE_Q2W] 1.00 0.00    1   1   1   1     1       NA       NA   NA
-#> rank[UNCOVER-1: IXE_Q4W] 2.23 0.42    2   2   2   2     3     4130     4019    1
-#> rank[UNCOVER-1: SEC_150] 4.00 0.05    4   4   4   4     4     2430       NA    1
-#> rank[UNCOVER-1: SEC_300] 2.77 0.42    2   3   3   3     3     4058     2017    1
+#> rank[UNCOVER-1: IXE_Q4W] 2.23 0.42    2   2   2   2     3     5019     4016    1
+#> rank[UNCOVER-1: SEC_150] 4.00 0.05    4   4   4   4     4     4034       NA    1
+#> rank[UNCOVER-1: SEC_300] 2.77 0.42    2   3   3   3     3     4985     4031    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-2 ---- 
 #> 
@@ -844,9 +870,9 @@ of achieving PASI 75).
 #> rank[UNCOVER-2: PBO]     6.00 0.00    6   6   6   6     6       NA       NA   NA
 #> rank[UNCOVER-2: ETN]     5.00 0.00    5   5   5   5     5       NA       NA   NA
 #> rank[UNCOVER-2: IXE_Q2W] 1.00 0.00    1   1   1   1     1       NA       NA   NA
-#> rank[UNCOVER-2: IXE_Q4W] 2.23 0.42    2   2   2   2     3     4130     4019    1
-#> rank[UNCOVER-2: SEC_150] 4.00 0.05    4   4   4   4     4     2430       NA    1
-#> rank[UNCOVER-2: SEC_300] 2.77 0.42    2   3   3   3     3     4058     2017    1
+#> rank[UNCOVER-2: IXE_Q4W] 2.23 0.42    2   2   2   2     3     5019     4016    1
+#> rank[UNCOVER-2: SEC_150] 4.00 0.05    4   4   4   4     4     4034       NA    1
+#> rank[UNCOVER-2: SEC_300] 2.77 0.42    2   3   3   3     3     4985     4031    1
 #> 
 #> -------------------------------------------------------------- Study: UNCOVER-3 ---- 
 #> 
@@ -858,15 +884,16 @@ of achieving PASI 75).
 #> rank[UNCOVER-3: PBO]     6.00 0.00    6   6   6   6     6       NA       NA   NA
 #> rank[UNCOVER-3: ETN]     5.00 0.00    5   5   5   5     5       NA       NA   NA
 #> rank[UNCOVER-3: IXE_Q2W] 1.00 0.00    1   1   1   1     1       NA       NA   NA
-#> rank[UNCOVER-3: IXE_Q4W] 2.23 0.42    2   2   2   2     3     4130     4019    1
-#> rank[UNCOVER-3: SEC_150] 4.00 0.05    4   4   4   4     4     2430       NA    1
-#> rank[UNCOVER-3: SEC_300] 2.77 0.42    2   3   3   3     3     4058     2017    1
+#> rank[UNCOVER-3: IXE_Q4W] 2.23 0.42    2   2   2   2     3     5019     4016    1
+#> rank[UNCOVER-3: SEC_150] 4.00 0.05    4   4   4   4     4     4034       NA    1
+#> rank[UNCOVER-3: SEC_300] 2.77 0.42    2   3   3   3     3     4985     4031    1
 plot(pso_ranks_FE)
 ```
 
 ![](example_plaque_psoriasis_files/figure-html/pso_ranks_FE-1.png)
 
 ``` r
+
 (pso_rankprobs_FE <- posterior_rank_probs(pso_fit_FE, lower_better = FALSE))
 #> ---------------------------------------------------------------- Study: FIXTURE ---- 
 #> 
@@ -929,6 +956,7 @@ plot(pso_rankprobs_FE)
 ![](example_plaque_psoriasis_files/figure-html/pso_rankprobs_FE-1.png)
 
 ``` r
+
 (pso_cumrankprobs_FE <- posterior_rank_probs(pso_fit_FE, lower_better = FALSE, cumulative = TRUE))
 #> ---------------------------------------------------------------- Study: FIXTURE ---- 
 #> 
@@ -1002,6 +1030,7 @@ covariate values in that population. For example, `newdata` could
 provide the following mean covariate values:
 
 ``` r
+
 new_agd_means <- tibble(
   bsa = 0.6,
   prevsys = 0.1,
@@ -1017,6 +1046,7 @@ function, and can be plotted with the corresponding
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) method:
 
 ``` r
+
 (pso_releff_FE_new <- relative_effects(pso_fit_FE, newdata = new_agd_means))
 #> ------------------------------------------------------------------ Study: New 1 ---- 
 #> 
@@ -1025,11 +1055,11 @@ function, and can be plotted with the corresponding
 #>        3     0.1 0.6     10 0.2
 #> 
 #>                   mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> d[New 1: ETN]     1.26 0.23 0.82 1.10 1.25 1.41  1.72     7145     3214    1
-#> d[New 1: IXE_Q2W] 2.89 0.22 2.45 2.74 2.89 3.03  3.33     7074     2755    1
-#> d[New 1: IXE_Q4W] 2.48 0.22 2.05 2.33 2.47 2.62  2.91     7695     2855    1
-#> d[New 1: SEC_150] 2.08 0.22 1.66 1.93 2.07 2.23  2.52     6533     3218    1
-#> d[New 1: SEC_300] 2.38 0.22 1.95 2.24 2.38 2.53  2.82     7062     3444    1
+#> d[New 1: ETN]     1.25 0.23 0.81 1.10 1.25 1.41  1.73     7193     3253    1
+#> d[New 1: IXE_Q2W] 2.89 0.23 2.46 2.73 2.88 3.04  3.36     7536     2900    1
+#> d[New 1: IXE_Q4W] 2.47 0.22 2.06 2.32 2.47 2.62  2.92     7471     3074    1
+#> d[New 1: SEC_150] 2.08 0.23 1.64 1.92 2.07 2.23  2.54     7354     2811    1
+#> d[New 1: SEC_300] 2.38 0.23 1.95 2.22 2.38 2.54  2.84     7932     3144    1
 plot(pso_releff_FE_new, ref_line = 0)
 ```
 
@@ -1049,6 +1079,7 @@ had the following covariate means and standard deviations (for
 continuous covariates) or proportions (for discrete covariates):
 
 ``` r
+
 new_agd_int <- tibble(
   bsa_mean = 0.6,
   bsa_sd = 0.3,
@@ -1068,6 +1099,7 @@ computed earlier from the IPD in the network, which is stored in the
 network object as `int_cor`.
 
 ``` r
+
 new_agd_int <- add_integration(new_agd_int,
   durnpso = distr(qgamma, mean = durnpso_mean, sd = durnpso_sd),
   prevsys = distr(qbern, prob = prevsys),
@@ -1085,6 +1117,7 @@ then produced using the
 [`predict()`](https://rdrr.io/r/stats/predict.html) method:
 
 ``` r
+
 (pso_pred_FE_new <- predict(pso_fit_FE, 
                             type = "response",
                             newdata = new_agd_int,
@@ -1092,12 +1125,12 @@ then produced using the
 #> ------------------------------------------------------------------ Study: New 1 ---- 
 #> 
 #>                      mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
-#> pred[New 1: PBO]     0.06 0.02 0.03 0.04 0.06 0.07  0.12     5414     3193    1
-#> pred[New 1: ETN]     0.37 0.06 0.26 0.33 0.37 0.41  0.48     6365     3745    1
-#> pred[New 1: IXE_Q2W] 0.90 0.03 0.84 0.88 0.90 0.91  0.94     4800     3650    1
-#> pred[New 1: IXE_Q4W] 0.80 0.04 0.72 0.78 0.81 0.83  0.87     5312     3374    1
-#> pred[New 1: SEC_150] 0.68 0.06 0.57 0.64 0.68 0.72  0.78     4461     3516    1
-#> pred[New 1: SEC_300] 0.78 0.05 0.68 0.75 0.78 0.81  0.86     5052     3480    1
+#> pred[New 1: PBO]     0.06 0.03 0.03 0.04 0.06 0.07  0.12     5374     3175    1
+#> pred[New 1: ETN]     0.37 0.06 0.26 0.33 0.37 0.41  0.49     5984     3616    1
+#> pred[New 1: IXE_Q2W] 0.90 0.03 0.84 0.88 0.90 0.92  0.94     4895     3616    1
+#> pred[New 1: IXE_Q4W] 0.80 0.04 0.73 0.78 0.81 0.83  0.87     5365     3751    1
+#> pred[New 1: SEC_150] 0.68 0.06 0.56 0.64 0.68 0.72  0.78     5129     3480    1
+#> pred[New 1: SEC_300] 0.78 0.05 0.68 0.75 0.78 0.81  0.86     5431     3005    1
 plot(pso_pred_FE_new, ref_line = c(0, 1))
 ```
 
@@ -1118,6 +1151,7 @@ We begin, as before, with some data transformations for each of the
 covariates and set up a treatment class variable `trtclass`.
 
 ``` r
+
 # IPD studies
 pso_ipd <- plaque_psoriasis_ipd %>% 
   mutate(
@@ -1162,6 +1196,7 @@ There are a very small number of individuals with missing values in the
 IPD, which we simply exclude from the analysis.
 
 ``` r
+
 pso_ipd %>% 
   group_by(studyc) %>% 
   summarise(n_total = n(),
@@ -1193,10 +1228,11 @@ lowest category is the sample size (or 1 for IPD), the second category
 counts those achieving PASI 75 *or greater* (\ge 75\\ reduction in
 symptoms), the third counts those achieving PASI 90 *or greater* (\ge
 90\\ reduction), and the final category counts those achieving PASI 100
-(100\\ reduction).[²](#fn2) We specify the treatment classes with
+(100\\ reduction).[^2] We specify the treatment classes with
 `trt_class = trtclass`.
 
 ``` r
+
 pso_net <- combine_network(
   set_ipd(pso_ipd,
     study = studyc,
@@ -1255,6 +1291,7 @@ nodes (`nudge = 0.1`). We further customise the plot using ggplot syntax
 to alter the colour scheme.
 
 ``` r
+
 class_pal <- c("#D95F02", "#7570B3", "#E7298A", "#E6AB02")
 
 plot(pso_net, weight_nodes = TRUE, weight_edges = TRUE, show_trt_class = TRUE, nudge = 0.1) +
@@ -1289,6 +1326,7 @@ these with the weighted mean of the correlations in the IPD studies (the
 default option).
 
 ``` r
+
 pso_net <- add_integration(pso_net,
   durnpso = distr(qgamma, mean = durnpso_mean, sd = durnpso_sd),
   prevsys = distr(qbern, prob = prevsys),
@@ -1322,6 +1360,7 @@ which will automatically be truncated to meet the ordering constraints
 (`prior_aux = flat()`).
 
 ``` r
+
 pso_fit_FE <- nma(pso_net, 
                   trt_effects = "fixed",
                   link = "probit", 
@@ -1336,14 +1375,17 @@ pso_fit_FE <- nma(pso_net,
 ```
 
 ``` r
+
 #> Note: Setting "PBO" as the network reference treatment.
 ```
 
 ``` r
+
 pso_fit_FE
 ```
 
 ``` r
+
 #> A fixed effects ML-NMR with a ordered likelihood (probit link).
 #> Regression model: ~(durnpso + prevsys + bsa + weight + psa) * .trt.
 #> Centred covariates at the following overall mean values:
@@ -1450,6 +1492,7 @@ between-study heterogeneity (we choose a \textrm{half-N}(0, 2.5^2) prior
 with `prior_het = half_normal(scale = 2.5)`.
 
 ``` r
+
 pso_fit_RE <- nma(pso_net, 
                   trt_effects = "random",
                   link = "probit", 
@@ -1465,6 +1508,7 @@ pso_fit_RE <- nma(pso_net,
 ```
 
 ``` r
+
 #> Note: Setting "PBO" as the network reference treatment.
 #> Warning: There were 1 divergent transitions after warmup. See
 #> https://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
@@ -1473,10 +1517,12 @@ pso_fit_RE <- nma(pso_net,
 ```
 
 ``` r
+
 pso_fit_RE
 ```
 
 ``` r
+
 #> A random effects ML-NMR with a ordered likelihood (probit link).
 #> Regression model: ~(durnpso + prevsys + bsa + weight + psa) * .trt.
 #> Centred covariates at the following overall mean values:
@@ -1562,20 +1608,24 @@ small compared to the relative treatment effects. We compare the model
 fit using the DIC:
 
 ``` r
+
 (pso_dic_FE <- dic(pso_fit_FE))
 ```
 
 ``` r
+
 #> Residual deviance: 8811.2 (on 12387 data points)
 #>                pD: 36
 #>               DIC: 8847.3
 ```
 
 ``` r
+
 (pso_dic_RE <- dic(pso_fit_RE))
 ```
 
 ``` r
+
 #> Residual deviance: 8799.8 (on 12387 data points)
 #>                pD: 42.3
 #>               DIC: 8842.1
@@ -1608,6 +1658,7 @@ analysis using synthetic IPD there was evidence of heterogeneity and we
 should really fit a random effects UME model instead.
 
 ``` r
+
 pso_fit_UME <- nma(pso_net, 
                    trt_effects = "fixed",
                    consistency = "ume",
@@ -1623,14 +1674,17 @@ pso_fit_UME <- nma(pso_net,
 ```
 
 ``` r
+
 #> Note: Setting "PBO" as the network reference treatment.
 ```
 
 ``` r
+
 pso_fit_UME
 ```
 
 ``` r
+
 #> A fixed effects ML-NMR with a ordered likelihood (probit link).
 #> An inconsistency model ('ume') was fitted.
 #> Regression model: ~(durnpso + prevsys + bsa + weight + psa) * .trt.
@@ -1715,20 +1769,24 @@ pso_fit_UME
 We compare model fit to the FE ML-NMR model using the DIC.
 
 ``` r
+
 pso_dic_FE
 ```
 
 ``` r
+
 #> Residual deviance: 8811.2 (on 12387 data points)
 #>                pD: 36
 #>               DIC: 8847.3
 ```
 
 ``` r
+
 (pso_dic_UME <- dic(pso_fit_UME))
 ```
 
 ``` r
+
 #> Residual deviance: 8811.8 (on 12387 data points)
 #>                pD: 36.5
 #>               DIC: 8848.4
@@ -1745,6 +1803,7 @@ produces a “dev-dev” plot of the residual deviance contributions under
 either model.
 
 ``` r
+
 plot(pso_dic_FE, pso_dic_UME, show_uncertainty = FALSE) +
   xlab("Residual deviance - consistency model") +
   ylab("Residual deviance - inconsistency (UME) model")
@@ -1763,6 +1822,7 @@ the UME model can also indicate inconsistency.
 The treatment classes in the network are as follows:
 
 ``` r
+
 data.frame(classes = pso_net$classes, treatments = pso_net$treatments)
 #>            classes treatments
 #> 1          Placebo        PBO
@@ -1802,6 +1862,7 @@ class_interactions = "common"
 can be written equivalently using the `.trtclass` special as
 
 ``` r
+
 regression = ~(durnpso + prevsys + bsa + weight + psa)*.trtclass
 ```
 
@@ -1824,6 +1885,7 @@ Since we are fitting several of these models, let us set up a list of
 model specifications and iterate over these.
 
 ``` r
+
 noSEM_mods <- list(
   durnpso = ~(prevsys + bsa + weight + psa)*.trtclass + durnpso*.trt,
   prevsys = ~(durnpso + bsa + weight + psa)*.trtclass + prevsys*.trt,
@@ -1856,6 +1918,7 @@ for (m in 1:length(noSEM_mods)) {
 ```
 
 ``` r
+
 #> Fitting model with independent interactions for durnpso
 #> Note: Setting "PBO" as the network reference treatment.
 #> Fitting model with independent interactions for prevsys
@@ -1871,20 +1934,24 @@ for (m in 1:length(noSEM_mods)) {
 Comparing model fit using the DIC
 
 ``` r
+
 pso_dic_FE
 ```
 
 ``` r
+
 #> Residual deviance: 8811.2 (on 12387 data points)
 #>                pD: 36
 #>               DIC: 8847.3
 ```
 
 ``` r
+
 lapply(noSEM_fits, dic)
 ```
 
 ``` r
+
 #> $durnpso
 #> Residual deviance: 8812.4 (on 12387 data points)
 #>                pD: 37.7
@@ -1922,6 +1989,7 @@ assumption for all covariates) and the relaxed models (independent
 interactions, one covariate at a time).
 
 ``` r
+
 library(purrr)
 library(stringr)
 library(forcats)
@@ -2002,10 +2070,12 @@ populations represented in the network using the
 function.
 
 ``` r
+
 (pso_releff_FE <- relative_effects(pso_fit_FE))
 ```
 
 ``` r
+
 #> ------------------------------------------------------------------ Study: CLEAR ---- 
 #> 
 #> Covariate values:
@@ -2137,6 +2207,7 @@ These relative effects can then be plotted using the
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) function.
 
 ``` r
+
 plot(pso_releff_FE, ref_line = 0)
 ```
 
@@ -2150,10 +2221,12 @@ study population, at each PASI cutoff can be produced using the
 probit-probabilities).
 
 ``` r
+
 (pso_pred_FE <- predict(pso_fit_FE, type = "response"))
 ```
 
 ``` r
+
 #> ------------------------------------------------------------------ Study: CLEAR ---- 
 #> 
 #>                               mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
@@ -2384,6 +2457,7 @@ Again, these can be plotted using the
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) function.
 
 ``` r
+
 plot(pso_pred_FE, ref_line = c(0, 1))
 ```
 
@@ -2408,6 +2482,7 @@ PsoBest registry ([Reich et al. 2015](#ref-Reich2015); [Augustin et al.
 covariate means and standard deviations in each of these populations:
 
 ``` r
+
 new_agd_means <- tibble::tribble(
              ~study, ~covariate,  ~mean,   ~sd,
           "PsoBest",      "bsa",     24,  20.5,
@@ -2450,6 +2525,7 @@ populations as the `newdata` argument. We only need the covariate means,
 with variable names matching those in the regression.
 
 ``` r
+
 (pso_releff_FE_new <- relative_effects(pso_fit_FE, 
                                        newdata = transmute(new_agd_means,
                                                            study,
@@ -2462,6 +2538,7 @@ with variable names matching those in the regression.
 ```
 
 ``` r
+
 #> -------------------------------------------------------- Study: Chiricozzi 2019 ---- 
 #> 
 #> Covariate values:
@@ -2509,6 +2586,7 @@ These estimates are plotted using the
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) function.
 
 ``` r
+
 plot(pso_releff_FE_new, ref_line = 0) + facet_wrap("Study")
 ```
 
@@ -2527,6 +2605,7 @@ AgD studies in the network, and the weighted correlation matrix from the
 IPD studies.
 
 ``` r
+
 new_agd_int <- add_integration(filter(new_agd_means, study != "PsoBest"),
                                durnpso = distr(qgamma, mean = durnpso_mean, sd = durnpso_sd),
                                prevsys = distr(qbern, prob = prevsys),
@@ -2555,6 +2634,7 @@ was available from PsoBest, so no predictions of absolute response rates
 could be made.
 
 ``` r
+
 (pso_pred_FE_new <- predict(pso_fit_FE, 
         type = "response", 
         newdata = new_agd_int,
@@ -2567,6 +2647,7 @@ could be made.
 ```
 
 ``` r
+
 #> -------------------------------------------------------- Study: Chiricozzi 2019 ---- 
 #> 
 #>                                         mean   sd 2.5%  25%  50%  75% 97.5% Bulk_ESS Tail_ESS Rhat
@@ -2623,6 +2704,7 @@ Again, we then plot these estimates using the
 with some customisation using ggplot syntax.
 
 ``` r
+
 plot(pso_pred_FE_new, ref_line = c(0, 1)) + 
   facet_grid(rows = "Study") + 
   aes(colour = Category) +
@@ -2634,8 +2716,7 @@ pso-full-pred-new](pso-full-pred-new-1.png "plot of chunk pso-full-pred-new")
 
 ## References
 
-Augustin, Matthias, Christina Spehr, Marc A. Radtke, Wolf-Henning
-Boehncke, Thomas Luger, Ulrich Mrowietz, Michael Reusch, et al. 2014.
+Augustin, Matthias, Christina Spehr, Marc A. Radtke, et al. 2014.
 “German Psoriasis Registry PsoBest: Objectives, Methodology and Baseline
 Data.” *JDDG: Journal Der Deutschen Dermatologischen Gesellschaft* 12
 (1): 48–57. <https://doi.org/10.1111/ddg.12233>.
@@ -2643,8 +2724,7 @@ Data.” *JDDG: Journal Der Deutschen Dermatologischen Gesellschaft* 12
 Caflisch, R. E. 1998. “Monte Carlo and Quasi-Monte Carlo Methods.” *Acta
 Numerica* 7: 1–49. <https://doi.org/10.1017/S0962492900002804>.
 
-Chiricozzi, Andrea, Anna Balato, Curdin Conrad, Andrea Conti, Paolo
-Dapavo, Paulo Ferreira, Francesca Maria Gaiani, et al. 2019.
+Chiricozzi, Andrea, Anna Balato, Curdin Conrad, et al. 2019.
 “Secukinumab Demonstrates Improvements in Absolute and Relative
 Psoriasis Area Severity Indices in Moderate-to-Severe Plaque Psoriasis:
 Results from a European, Multicentric, Retrospective, Real-World Study.”
@@ -2652,26 +2732,24 @@ Results from a European, Multicentric, Retrospective, Real-World Study.”
 <https://doi.org/10.1080/09546634.2019.1671577>.
 
 Dias, S., N. J. Welton, A. J. Sutton, D. M. Caldwell, G. Lu, and A. E.
-Ades. 2011. “NICE DSU Technical Support Document 4: Inconsistency in
-Networks of Evidence Based on Randomised Controlled Trials.” National
+Ades. 2011. *NICE DSU Technical Support Document 4: Inconsistency in
+Networks of Evidence Based on Randomised Controlled Trials*. National
 Institute for Health and Care Excellence.
-<https://www.sheffield.ac.uk/nice-dsu>.
+<https://sheffield.ac.uk/nice-dsu>.
 
-Gordon, K. B., A. Blauvelt, K. A. Papp, R. G. Langley, T. Luger, M.
-Ohtsuki, K. Reich, et al. 2016. “Phase 3 Trials of Ixekizumab in
-Moderate-to-Severe Plaque Psoriasis.” *New England Journal of Medicine*
-375 (4): 345–56. <https://doi.org/10.1056/nejmoa1512711>.
+Gordon, K. B., A. Blauvelt, K. A. Papp, et al. 2016. “Phase 3 Trials of
+Ixekizumab in Moderate-to-Severe Plaque Psoriasis.” *New England Journal
+of Medicine* 375 (4): 345–56. <https://doi.org/10.1056/nejmoa1512711>.
 
-Griffiths, C. E. M., K. Reich, M. Lebwohl, P. van de Kerkhof, C. Paul,
-A. Menter, G. S. Cameron, et al. 2015. “Comparison of Ixekizumab with
-Etanercept or Placebo in Moderate-to-Severe Psoriasis (UNCOVER-2 and
-UNCOVER-3): Results from Two Phase 3 Randomised Trials.” *The Lancet*
-386 (9993): 541–51. <https://doi.org/10.1016/s0140-6736(15)60125-8>.
+Griffiths, C. E. M., K. Reich, M. Lebwohl, et al. 2015. “Comparison of
+Ixekizumab with Etanercept or Placebo in Moderate-to-Severe Psoriasis
+(UNCOVER-2 and UNCOVER-3): Results from Two Phase 3 Randomised Trials.”
+*The Lancet* 386 (9993): 541–51.
+<https://doi.org/10.1016/s0140-6736(15)60125-8>.
 
-Langley, R. G., B. E. Elewski, M. Lebwohl, K. Reich, C. E. M. Griffiths,
-K. Papp, L. Puig, et al. 2014. “Secukinumab in Plaque Psoriasis —
-Results of Two Phase 3 Trials.” *New England Journal of Medicine* 371
-(4): 326–38. <https://doi.org/10.1056/nejmoa1314258>.
+Langley, R. G., B. E. Elewski, M. Lebwohl, et al. 2014. “Secukinumab in
+Plaque Psoriasis — Results of Two Phase 3 Trials.” *New England Journal
+of Medicine* 371 (4): 326–38. <https://doi.org/10.1056/nejmoa1314258>.
 
 Niederreiter, H. 1978. “Quasi-Monte Carlo Methods and Pseudo-Random
 Numbers.” *Bulletin of the American Mathematical Society* 84 (6):
@@ -2682,44 +2760,39 @@ Meta-Analysis Using Individual Patient Data.” PhD thesis, University of
 Bristol.
 
 Phillippo, D. M., A. E. Ades, S. Dias, S. Palmer, K. R. Abrams, and N.
-J. Welton. 2016. “NICE DSU Technical Support Document 18: Methods for
-Population-Adjusted Indirect Comparisons in Submission to NICE.”
+J. Welton. 2016. *NICE DSU Technical Support Document 18: Methods for
+Population-Adjusted Indirect Comparisons in Submission to NICE*.
 National Institute for Health and Care Excellence.
-<https://www.sheffield.ac.uk/nice-dsu>.
+<https://sheffield.ac.uk/nice-dsu>.
 
-Phillippo, D. M., S. Dias, A. E. Ades, M. Belger, A. Brnabic, D. Saure,
-Y. Schymura, and N. J. Welton. 2022. “Validating the Assumptions of
-Population Adjustment: Application of Multilevel Network Meta-Regression
-to a Network of Treatments for Plaque Psoriasis.” *Medical Decision
-Making*. <https://doi.org/10.1177/0272989X221117162>.
+Phillippo, D. M., S. Dias, A. E. Ades, et al. 2020. “Multilevel Network
+Meta-Regression for Population-Adjusted Treatment Comparisons.” *Journal
+of the Royal Statistical Society: Series A (Statistics in Society)* 183
+(3): 1189–210. <https://doi.org/10.1111/rssa.12579>.
 
-Phillippo, D. M., S. Dias, A. E. Ades, M. Belger, A. Brnabic, A.
-Schacht, D. Saure, Z. Kadziola, and N. J. Welton. 2020. “Multilevel
-Network Meta-Regression for Population-Adjusted Treatment Comparisons.”
-*Journal of the Royal Statistical Society: Series A (Statistics in
-Society)* 183 (3): 1189–1210. <https://doi.org/10.1111/rssa.12579>.
+Phillippo, D. M., S. Dias, A. E. Ades, et al. 2022. “Validating the
+Assumptions of Population Adjustment: Application of Multilevel Network
+Meta-Regression to a Network of Treatments for Plaque Psoriasis.”
+*Medical Decision Making*, ahead of print.
+<https://doi.org/10.1177/0272989X221117162>.
 
-Reich, K., U. Mrowietz, M. A. Radtke, D. Thaci, S. J. Rustenbach, C.
-Spehr, and M. Augustin. 2015. “Drug Safety of Systemic Treatments for
-Psoriasis: Results from the German Psoriasis Registry PsoBest.”
-*Archives of Dermatological Research* 307 (10): 875–83.
-<https://doi.org/10.1007/s00403-015-1593-8>.
+Reich, K., U. Mrowietz, M. A. Radtke, et al. 2015. “Drug Safety of
+Systemic Treatments for Psoriasis: Results from the German Psoriasis
+Registry PsoBest.” *Archives of Dermatological Research* 307 (10):
+875–83. <https://doi.org/10.1007/s00403-015-1593-8>.
 
-Thaçi, D., A. Körber, R. Kiedrowski, T. Bachhuber, N. Melzer, T.
-Kasparek, E. Duetting, G. Kraehn-Senftleben, U. Amon, and M. Augustin.
-2019. “Secukinumab Is Effective in Treatment of Moderate-to-Severe
-Plaque Psoriasis: Real-Life Effectiveness and Safety from the PROSPECT
-Study.” *Journal of the European Academy of Dermatology and Venereology*
-34 (2): 310–18. <https://doi.org/10.1111/jdv.15962>.
+Thaçi, D., A. Körber, R. Kiedrowski, et al. 2019. “Secukinumab Is
+Effective in Treatment of Moderate-to-Severe Plaque Psoriasis: Real-Life
+Effectiveness and Safety from the PROSPECT Study.” *Journal of the
+European Academy of Dermatology and Venereology* 34 (2): 310–18.
+<https://doi.org/10.1111/jdv.15962>.
 
-------------------------------------------------------------------------
-
-1.  The convergence rate of QMC is typically \mathcal{O}(1/n), whereas
+[^1]: The convergence rate of QMC is typically \mathcal{O}(1/n), whereas
     the expected convergence rate of standard MC is
     \mathcal{O}(1/n^\frac{1}{2}) ([Caflisch 1998](#ref-Caflisch1998);
     [Niederreiter 1978](#ref-Niederreiter1978)).
 
-2.  The alternative is “exclusive” format, where the lowest category
+[^2]: The alternative is “exclusive” format, where the lowest category
     counts those not achieving any higher outcomes (i.e. failure to
     achieve PASI 75, \<75\\ reduction in symptoms), the second counts
     those achieving PASI 75 *but not PASI 90 or 100* (\ge 75\\ and

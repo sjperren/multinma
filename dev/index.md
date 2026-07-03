@@ -13,6 +13,7 @@ You can install the released version of `multinma` from
 [CRAN](https://CRAN.R-project.org/package=multinma) with:
 
 ``` r
+
 install.packages("multinma")
 ```
 
@@ -20,6 +21,7 @@ The development version can be installed from
 [R-universe](https://dmphillippo.r-universe.dev) with:
 
 ``` r
+
 install.packages("multinma", repos = c("https://dmphillippo.r-universe.dev", getOption("repos")))
 ```
 
@@ -27,6 +29,7 @@ or from source on [GitHub](https://github.com/dmphillippo/multinma)
 with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("dmphillippo/multinma")
 ```
@@ -47,7 +50,7 @@ meta-analysis:
 > Dias, S. et al. (2011). “NICE DSU Technical Support Documents 1-7:
 > Evidence Synthesis for Decision Making.” *National Institute for
 > Health and Care Excellence.* Available from
-> <https://www.sheffield.ac.uk/nice-dsu/tsds>.
+> <https://sheffield.ac.uk/nice-dsu/tsds>.
 
 Multilevel network meta-regression is set out in the following methods
 papers:
@@ -58,17 +61,18 @@ papers:
 > 183(3):1189-1210. doi:
 > [10.1111/rssa.12579](https://doi.org/10.1111/rssa.12579).
 
-> Phillippo, D. M. et al. (2024). “Multilevel network meta-regression
+> Phillippo, D. M. et al. (2025). “Multilevel network meta-regression
 > for general likelihoods: synthesis of individual and aggregate data
-> with applications to survival analysis”.
-> *arXiv*:[2401.12640](https://arxiv.org/abs/2401.12640).
+> with applications to survival analysis”. *Journal of the Royal
+> Statistical Society: Series A (Statistics in Society)*, qnaf169. doi:
+> [10.1093/jrsssa/qnaf169](https://doi.org/10.1093/jrsssa/qnaf169).
 
 ## Citing multinma
 
 The `multinma` package can be cited as follows:
 
-> Phillippo, D. M. (2025). *multinma: Bayesian Network Meta-Analysis of
-> Individual and Aggregate Data*. R package version 0.8.1.9000, doi:
+> Phillippo, D. M. (2026). *multinma: Bayesian Network Meta-Analysis of
+> Individual and Aggregate Data*. R package version 0.9.1.9000, doi:
 > [10.5281/zenodo.3904454](https://doi.org/10.5281/zenodo.3904454).
 
 When fitting ML-NMR models, please cite the methods paper:
@@ -81,10 +85,11 @@ When fitting ML-NMR models, please cite the methods paper:
 
 For ML-NMR models with time-to-event outcomes, please cite:
 
-> Phillippo, D. M. et al. (2024). “Multilevel network meta-regression
+> Phillippo, D. M. et al. (2025). “Multilevel network meta-regression
 > for general likelihoods: synthesis of individual and aggregate data
-> with applications to survival analysis”.
-> *arXiv*:[2401.12640](https://arxiv.org/abs/2401.12640).
+> with applications to survival analysis”. *Journal of the Royal
+> Statistical Society: Series A (Statistics in Society)*, qnaf169. doi:
+> [10.1093/jrsssa/qnaf169](https://doi.org/10.1093/jrsssa/qnaf169).
 
 ## References
 

@@ -13,8 +13,8 @@
 <link rel="manifest" href="../site.webmanifest">
 <!-- katex math --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script><script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script><script src="../katex-auto.js"></script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/Source_Sans_Pro-0.4.10/font.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">multinma</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.1.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.9.1.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,6 +48,7 @@
     <li><a class="dropdown-item" href="../articles/example_atrial_fibrillation.html">Example: Atrial fibrillation</a></li>
     <li><a class="dropdown-item" href="../articles/example_bcg_vaccine.html">Example: BCG vaccine for tuberculosis</a></li>
     <li><a class="dropdown-item" href="../articles/example_blocker.html">Example: Beta blockers</a></li>
+    <li><a class="dropdown-item" href="../articles/example_certolizumab.html">Example: Certolizumab</a></li>
     <li><a class="dropdown-item" href="../articles/example_diabetes.html">Example: Diabetes</a></li>
     <li><a class="dropdown-item" href="../articles/example_dietary_fat.html">Example: Dietary fat</a></li>
     <li><a class="dropdown-item" href="../articles/example_hta_psoriasis.html">Example: Plaque psoriasis HTA report</a></li>
@@ -167,7 +168,7 @@ network reference treatment.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sa_net</span>, level <span class="op">=</span> <span class="st">"class"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span>, legend.box <span class="op">=</span> <span class="st">"vertical"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level2">
 <h2 id="model-selection-strategy">Model selection strategy<a class="anchor" aria-label="anchor" href="#model-selection-strategy"></a>
@@ -255,7 +256,7 @@ for the UME model plotted against the NMA consistency model.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sa_dic_RE</span>, <span class="va">sa_dic_ume_RE</span>, show_uncertainty <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Residual deviance - No Class model"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"Residual deviance - UME model"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-11-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>The dev-dev plot comparing residual deviance contributions for the
 UME model and no-class model shows that most data points lie close to
 the line of equality.</p>
@@ -439,7 +440,7 @@ model plotted against the no class model.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sa_dic_EXclass_RE</span>, <span class="va">sa_dic_RE</span>, show_uncertainty <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Residual deviance - Exchangeable Class model"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"Residual deviance - No Class model"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>Although both models yield similar residual deviance (163.4
 vs. 162.6) and between‐study heterogeneity, the exchangeable class model
 reduces model complexity—reflected by a lower effective number of
@@ -515,7 +516,7 @@ Exchangeable class model plotted against the no class model.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sa_dic_COclass_RE</span>, <span class="va">sa_dic_EXclass_RE</span>, show_uncertainty <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Residual deviance - Common Class model"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"Residual deviance - Exchangeable Class model"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>The dev–dev plot indicates that while some data points favor one
 model over the other, overall the fit is similar. Therefore, given
 nearly identical DIC scores, the choice between the two random‐effects
@@ -537,7 +538,7 @@ classes.</p>
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="../reference/relative_effects.html">relative_effects</a></span><span class="op">(</span><span class="va">sa_fit_EXclass_RE</span><span class="op">)</span>, ref_line <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
 <h3 id="relative-class-effects">Relative class effects<a class="anchor" aria-label="anchor" href="#relative-class-effects"></a>
@@ -549,7 +550,7 @@ classes.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">sa_fit_EXclass_RE</span>,</span>
 <span>     pars <span class="op">=</span> <span class="st">"class_mean"</span>,</span>
 <span>     ref_line <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>We can combine the treatment and class effects into a single plot as
 follows:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
@@ -579,7 +580,7 @@ follows:</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"SMD"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">""</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/theme_multinma.html">theme_multinma</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>strip.text.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-23-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-23-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>We aim to visualize the class ranks and rank probabilities by
 summarizing their distributions. To achieve this, we extract the
 posterior draws for class means, add a reference treatment, and compute
@@ -611,7 +612,7 @@ treatment class, which we then plot.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html" class="external-link">coord_flip</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Class"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"Posterior Ranks"</span><span class="op">)</span> <span class="op">+</span></span>
 <span><span class="fu"><a href="../reference/theme_multinma.html">theme_multinma</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-24-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-24-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>Treatment classes with higher ranks have median values closer to 1,
 positioned toward the left of the x-axis. The Combined treatment class
 has the highest median rank, followed by CBT individual. In contrast,
@@ -643,7 +644,7 @@ classes, aside from the reference.</p>
 <span>  <span class="fu"><a href="../reference/theme_multinma.html">theme_multinma</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Rank"</span>,</span>
 <span>       y <span class="op">=</span> <span class="st">"Probability"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" width="700" style="display: block; margin: auto;"></p>
+<p><img src="example_social_anxiety_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="" width="700" style="display: block; margin: auto;"></p>
 <p>Higher-ranked classes have a greater density on the left side of the
 x-axis, indicating a higher probability of achieving a top rank across
 posterior samples. The Combined class shows the highest density on the
@@ -658,19 +659,18 @@ higher probability of lower rankings.</p>
 <div class="section level2">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="refs" class="references csl-bib-body hanging-indent">
 <div id="ref-mayo2014psychological" class="csl-entry">
-Mayo-Wilson, Evan, Sofia Dias, Ifigeneia Mavranezouli, Kayleigh Kew,
-David M Clark, AE Ades, and Stephen Pilling. 2014. <span>“Psychological
-and Pharmacological Interventions for Social Anxiety Disorder in Adults:
-A Systematic Review and Network Meta-Analysis.”</span> <em>The Lancet
-Psychiatry</em> 1 (5): 368–76.
+Mayo-Wilson, Evan, Sofia Dias, Ifigeneia Mavranezouli, et al. 2014.
+<span>“Psychological and Pharmacological Interventions for Social
+Anxiety Disorder in Adults: A Systematic Review and Network
+Meta-Analysis.”</span> <em>The Lancet Psychiatry</em> 1 (5): 368–76.
 </div>
 <div id="ref-Perren2025" class="csl-entry">
 Perren, Samuel J., Hugo Pedder, Nicky J. Welton, and David M. Phillippo.
 2025. <span>“Network Meta-Analysis with Class Effects: A Practical Guide
-and Model Selection Algorithm.”</span> <em>Medical Decision Making</em>,
-November. <a href="https://doi.org/10.1177/0272989x251389887" class="external-link">https://doi.org/10.1177/0272989x251389887</a>.
+and Model Selection Algorithm.”</span> <em>Medical Decision Making</em>
+46 (3): 275–95. <a href="https://doi.org/10.1177/0272989x251389887" class="external-link">https://doi.org/10.1177/0272989x251389887</a>.
 </div>
 </div>
 </div>
