@@ -9,7 +9,7 @@ meta-regression models in Stan."><meta property="og:image" content="https://dmph
 
     <a class="navbar-brand me-2" href="../index.html">multinma</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.9.1.9002</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.9.1.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +99,8 @@ meta-regression models in Stan.</p>
 <span>  mspline_degree <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  n_knots <span class="op">=</span> <span class="fl">7</span>,</span>
 <span>  knots <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  mspline_basis <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  mspline_basis <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  debug <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -304,6 +305,13 @@ investigate knot placement prior to model fitting.</p></dd>
 provided with <code>mspline_basis</code> which will be used directly. In this case,
 all other M-spline options will be ignored.</p></dd>
 
+
+<dt id="arg-debug">debug<a class="anchor" aria-label="anchor" href="#arg-debug"></a></dt>
+<dd><p>If <code>TRUE</code>, the model will not be fitted and instead a list of
+the data input to Stan will be returned. Note that the full design matrix
+(combined across all data types) is element <code>X</code> of this list. Default
+<code>FALSE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -420,7 +428,7 @@ the other survival distributions implemented in this package.</p>
 <p>For the <code>mspline</code> and <code>pexp</code> likelihoods, the auxiliary parameters are the
 spline coefficients for each study. These form a unit simplex (i.e. lie
 between 0 and 1, and sum to 1), and are given a random walk prior
-distribution (Phillippo et al. 2025)
+distribution (Phillippo et al. 2026)
 . <code>prior_aux</code>
 specifies the hyperprior on the random walk standard deviation \(\sigma\)
 which controls the level of smoothing of the baseline hazard, with
@@ -443,7 +451,7 @@ in each study population, whereas if <code>aux_regression = ~.trt</code> then ab
 predictions can be produced for all treatments in any population. For
 <code>mspline</code> and <code>pexp</code> likelihoods, the regression coefficients are smoothed
 over time using a random walk prior to avoid overfitting
-(Phillippo et al. 2025)
+(Phillippo et al. 2026)
 : <code>prior_aux_reg</code> specifies the
 hyperprior for the random walk standard deviation. For other parametric
 likelihoods, <code>prior_aux_reg</code> specifies the prior for the auxiliary
@@ -473,12 +481,12 @@ National Institute for Health and Care Excellence.
 <em>Journal of the Royal Statistical Society Series A: Statistics in Society</em>, <b>189</b>(3), 1856–1875.
 ISSN 1467-985X.
 <a href="https://doi.org/10.1093/jrsssa/qnaf169" class="external-link">doi:10.1093/jrsssa/qnaf169</a>
-.<br><br> Phillippo DM, Sadek A, Pedder H, Welton NJ (2025).
+.<br><br> Phillippo DM, Sadek A, Pedder H, Welton NJ (2026).
 “Network Meta-Analysis of survival outcomes with non-proportional hazards using flexible M-splines.”
-<em>arXiv</em>.
-<a href="https://doi.org/10.48550/ARXIV.2509.10383" class="external-link">doi:10.48550/ARXIV.2509.10383</a>
-.
-2509.10383.</p>
+<em>Statistics in Medicine</em>, <b>45</b>(18-19), e70695.
+ISSN 1097-0258.
+<a href="https://doi.org/10.1002/sim.70695" class="external-link">doi:10.1002/sim.70695</a>
+.</p>
     </div>
 
     <div class="section level2">
@@ -550,7 +558,7 @@ ISSN 1467-985X.
 <span class="r-out co"><span class="r-pr">#&gt;</span> d[Self-help]                  0.31     0.46  2696    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> lp__                      -5856.58 -5852.87  1699    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Wed Jul 29 17:34:19 2026.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Tue Sep  1 10:56:29 2026.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> convergence, Rhat=1).</span>
@@ -583,7 +591,7 @@ ISSN 1467-985X.
 <span class="r-out co"><span class="r-pr">#&gt;</span> lp__                      -5763.68 -5756.83  1081    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> tau                           0.93     1.26  1169    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Wed Jul 29 17:34:27 2026.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Tue Sep  1 10:56:33 2026.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> convergence, Rhat=1).</span>
@@ -633,7 +641,7 @@ ISSN 1467-985X.
 <span class="r-out co"><span class="r-pr">#&gt;</span> lp__                                            -5754.24   929    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> tau                                                 1.43  1050    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Wed Jul 29 17:34:35 2026.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Tue Sep  1 10:56:36 2026.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> convergence, Rhat=1).</span>
@@ -962,7 +970,7 @@ ISSN 1467-985X.
 <span class="r-out co"><span class="r-pr">#&gt;</span> d[SEC_300]                              2.45     2.53     2.68  5719    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> lp__                                -1576.05 -1573.88 -1570.57  1619    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Wed Jul 29 17:35:49 2026.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Tue Sep  1 10:57:30 2026.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> convergence, Rhat=1).</span>
@@ -1037,7 +1045,7 @@ ISSN 1467-985X.
 <span class="r-out co"><span class="r-pr">#&gt;</span> shape[Morgan2012]       0.94  5126    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> shape[Palumbo2014]      1.16  4504    1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Wed Jul 29 17:38:35 2026.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Samples were drawn using NUTS(diag_e) at Tue Sep  1 10:59:40 2026.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> For each parameter, n_eff is a crude measure of effective sample size,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> and Rhat is the potential scale reduction factor on split chains (at </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> convergence, Rhat=1).</span>

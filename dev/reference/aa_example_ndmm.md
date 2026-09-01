@@ -76,7 +76,7 @@ ndmm_fit
 #> shape[Morgan2012]       0.94  4713    1
 #> shape[Palumbo2014]      1.16  4706    1
 #> 
-#> Samples were drawn using NUTS(diag_e) at Wed Jul 29 17:27:21 2026.
+#> Samples were drawn using NUTS(diag_e) at Tue Sep  1 10:52:46 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
