@@ -190,7 +190,7 @@ cert_fit_FE
 #> d[Tocilizumab]                   2.46  2652    1
 #> lp__                         -1703.40  1629    1
 #> 
-#> Samples were drawn using NUTS(diag_e) at Thu Oct  8 11:49:42 2026.
+#> Samples were drawn using NUTS(diag_e) at Mon Oct 12 12:18:01 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -251,7 +251,7 @@ cert_fit_RE
 #> lp__                         -1706.62   941 1.00
 #> tau                              0.67   609 1.01
 #> 
-#> Samples were drawn using NUTS(diag_e) at Thu Oct  8 11:49:46 2026.
+#> Samples were drawn using NUTS(diag_e) at Mon Oct 12 12:18:04 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -846,7 +846,7 @@ nma(cert_net,
 #> d[Tocilizumab]                                2.28     2.46  2786    1
 #> lp__                                      -1706.87 -1703.94  1892    1
 #> 
-#> Samples were drawn using NUTS(diag_e) at Thu Oct  8 11:49:57 2026.
+#> Samples were drawn using NUTS(diag_e) at Mon Oct 12 12:18:11 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
