@@ -210,7 +210,7 @@ pso_fit_FE
 #> cc[PASI75]             1
 #> cc[PASI90]             1
 #> 
-#> Samples were drawn using NUTS(diag_e) at Mon Oct 12 12:19:08 2026.
+#> Samples were drawn using NUTS(diag_e) at Sun Nov 15 11:42:23 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).
@@ -341,7 +341,7 @@ pso_fit_RE
 #> cc[PASI75]             1
 #> cc[PASI90]             1
 #> 
-#> Samples were drawn using NUTS(diag_e) at Mon Oct 12 12:19:44 2026.
+#> Samples were drawn using NUTS(diag_e) at Sun Nov 15 11:43:23 2026.
 #> For each parameter, n_eff is a crude measure of effective sample size,
 #> and Rhat is the potential scale reduction factor on split chains (at 
 #> convergence, Rhat=1).

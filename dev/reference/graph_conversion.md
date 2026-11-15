@@ -91,9 +91,9 @@ smk_net
 
 # Convert to igraph object
 igraph::as.igraph(smk_net)  # Edges combined by default
-#> IGRAPH 7bf2ca7 UN-- 4 6 -- 
-#> + attr: name (v/c), .sample_size (v/n), .nstudy (e/n), .type (e/c)
-#> + edges from 7bf2ca7 (vertex names):
+#> IGRAPH c502cd7 UN-- 4 6 -- 
+#> + attr: name (v/c), .sample_size (v/n), .type (e/c), .nstudy (e/n)
+#> + edges from c502cd7 (vertex names):
 #> [1] No intervention       --Group counselling     
 #> [2] No intervention       --Individual counselling
 #> [3] Group counselling     --Individual counselling
@@ -101,9 +101,9 @@ igraph::as.igraph(smk_net)  # Edges combined by default
 #> [5] Group counselling     --Self-help             
 #> [6] Individual counselling--Self-help             
 igraph::as.igraph(smk_net, collapse = FALSE)  # Without combining edges
-#> IGRAPH 6f64e49 UN-- 4 28 -- 
+#> IGRAPH 35c0f88 UN-- 4 28 -- 
 #> + attr: name (v/c), .sample_size (v/n), .study (e/x), .type (e/c)
-#> + edges from 6f64e49 (vertex names):
+#> + edges from 35c0f88 (vertex names):
 #>  [1] No intervention       --Group counselling     
 #>  [2] No intervention       --Individual counselling
 #>  [3] Group counselling     --Individual counselling
@@ -129,11 +129,11 @@ tidygraph::as_tbl_graph(smk_net)  # Edges combined by default
 #> 4 Self-help                      1571
 #> #
 #> # Edge Data: 6 × 4
-#>    from    to .nstudy .type
-#>   <int> <int>   <int> <chr>
-#> 1     1     2       2 AgD  
-#> 2     1     3      15 AgD  
-#> 3     2     3       4 AgD  
+#>    from    to .type .nstudy
+#>   <int> <int> <chr>   <int>
+#> 1     1     2 AgD         2
+#> 2     1     3 AgD        15
+#> 3     2     3 AgD         4
 #> # ℹ 3 more rows
 tidygraph::as_tbl_graph(smk_net, collapse = FALSE)  # Without combining edges
 #> # A tbl_graph: 4 nodes and 28 edges
